@@ -1,8 +1,6 @@
 package com.luck.picture.lib.utils;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.ContextWrapper;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -37,21 +35,6 @@ public class ActivityCompatHelper {
         return fragment == null;
     }
 
-
-    public static boolean assertValidRequest(Context context) {
-        if (context instanceof Activity) {
-            Activity activity = (Activity) context;
-            return !isDestroy(activity);
-        } else if (context instanceof ContextWrapper) {
-            ContextWrapper contextWrapper = (ContextWrapper) context;
-            if (contextWrapper.getBaseContext() instanceof Activity) {
-                Activity activity = (Activity) contextWrapper.getBaseContext();
-                return !isDestroy(activity);
-            }
-        }
-        return true;
-    }
-
     /**
      * 验证当前是否是根Fragment
      *
@@ -59,7 +42,7 @@ public class ActivityCompatHelper {
      * @return
      */
     public static boolean checkRootFragment(FragmentActivity activity) {
-        if (ActivityCompatHelper.isDestroy(activity)) {
+        if (ActivityCompatHelper.isDestroy(activity)){
             return false;
         }
         return activity.getSupportFragmentManager().getBackStackEntryCount() == MIN_FRAGMENT_COUNT;

@@ -37,7 +37,6 @@ public class PreviewVideoHolder extends BasePreviewHolder {
         ivPlayButton = itemView.findViewById(R.id.iv_play_video);
         mPlayerView = itemView.findViewById(R.id.playerView);
         progress = itemView.findViewById(R.id.progress);
-        mPlayerView.setUseController(false);
         PictureSelectionConfig config = PictureSelectionConfig.getInstance();
         ivPlayButton.setVisibility(config.isPreviewZoomEffect ? View.GONE : View.VISIBLE);
     }
@@ -46,21 +45,22 @@ public class PreviewVideoHolder extends BasePreviewHolder {
     public void bindData(LocalMedia media, int position) {
         super.bindData(media, position);
         String path = media.getAvailablePath();
+        mPlayerView.setUseController(false);
         setScaleDisplaySize(media);
         ivPlayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Player player = mPlayerView.getPlayer();
-                if (player != null) {
-                    progress.setVisibility(View.VISIBLE);
-                    ivPlayButton.setVisibility(View.GONE);
-                    mPreviewEventListener.onPreviewVideoTitle(media.getFileName());
-                    MediaItem mediaItem = PictureMimeType.isContent(path)
-                            ? MediaItem.fromUri(Uri.parse(path)) : MediaItem.fromUri(Uri.fromFile(new File(path)));
-                    player.setMediaItem(mediaItem);
-                    player.prepare();
-                    player.play();
-                }
+                progress.setVisibility(View.VISIBLE);
+                ivPlayButton.setVisibility(View.GONE);
+                mPreviewEventListener.onPreviewVideoTitle(media.getFileName());
+                ExoPlayer player = new ExoPlayer.Builder(itemView.getContext()).build();
+                mPlayerView.setPlayer(player);
+                MediaItem mediaItem = PictureMimeType.isContent(path)
+                        ? MediaItem.fromUri(Uri.parse(path)) : MediaItem.fromUri(Uri.fromFile(new File(path)));
+                player.setMediaItem(mediaItem);
+                player.prepare();
+                player.play();
+                player.addListener(mPlayerListener);
             }
         });
         itemView.setOnClickListener(new View.OnClickListener() {
@@ -95,7 +95,7 @@ public class PreviewVideoHolder extends BasePreviewHolder {
         }
     }
 
-    private final Player.Listener mPlayerListener = new Player.Listener() {
+    private Player.Listener mPlayerListener = new Player.Listener() {
         @Override
         public void onPlayerError(@NonNull PlaybackException error) {
             playerDefaultUI();
@@ -136,32 +136,15 @@ public class PreviewVideoHolder extends BasePreviewHolder {
         }
     }
 
-    @Override
-    public void onViewAttachedToWindow() {
-        Player player = new ExoPlayer.Builder(itemView.getContext()).build();
-        mPlayerView.setPlayer(player);
-        player.addListener(mPlayerListener);
-    }
-
-    @Override
-    public void onViewDetachedFromWindow() {
-        Player player = mPlayerView.getPlayer();
-        if (player != null) {
-            player.removeListener(mPlayerListener);
-            player.release();
-            mPlayerView.setPlayer(null);
-            playerDefaultUI();
-        }
-    }
-
     /**
      * 释放VideoView
      */
     public void releaseVideo() {
-        Player player = mPlayerView.getPlayer();
-        if (player != null) {
-            player.removeListener(mPlayerListener);
-            player.release();
+        if (mPlayerView.getPlayer() != null) {
+            mPlayerView.getPlayer().removeListener(mPlayerListener);
+            mPlayerListener = null;
+            mPlayerView.getPlayer().release();
+            playerDefaultUI();
         }
     }
 }

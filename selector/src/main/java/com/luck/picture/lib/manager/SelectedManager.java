@@ -14,38 +14,42 @@ public class SelectedManager {
     public static final int INVALID = -1;
     public static final int ADD_SUCCESS = 0;
     public static final int REMOVE = 1;
-    public static final int SUCCESS = 200;
+
 
     /**
      * selected result
      */
     private static final ArrayList<LocalMedia> selectedResult = new ArrayList<>();
 
-    public static synchronized void addSelectResult(LocalMedia media) {
+    public static void addResult(LocalMedia media) {
         selectedResult.add(media);
     }
 
-    public static synchronized void addAllSelectResult(ArrayList<LocalMedia> result) {
-        selectedResult.addAll(result);
-    }
-
-    public static synchronized ArrayList<LocalMedia> getSelectedResult() {
+    public static ArrayList<LocalMedia> getSelectedResult() {
         return selectedResult;
     }
 
-    public static int getSelectCount() {
-        return selectedResult.size();
+    public static int getCount() {
+        int size = 0;
+        for (LocalMedia localMedia : selectedResult) {
+            if(localMedia.isNeedShow())
+                size++;
+        }
+        return size;
     }
 
     public static String getTopResultMimeType() {
         return selectedResult.size() > 0 ? selectedResult.get(0).getMimeType() : "";
     }
 
-    public static synchronized void clearSelectResult() {
-        if (selectedResult.size() > 0) {
-            selectedResult.clear();
-        }
+    public static void removeResult(LocalMedia media) {
+        selectedResult.remove(media);
     }
+
+    public static void clear() {
+        selectedResult.clear();
+    }
+
 
     /**
      * selected external preview result
@@ -62,9 +66,7 @@ public class SelectedManager {
     }
 
     public static void clearExternalPreviewData() {
-        if (selectedPreviewResult.size() > 0) {
-            selectedPreviewResult.clear();
-        }
+        selectedPreviewResult.clear();
     }
 
     /**

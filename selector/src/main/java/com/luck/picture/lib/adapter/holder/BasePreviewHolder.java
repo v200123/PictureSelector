@@ -36,12 +36,6 @@ public class BasePreviewHolder extends RecyclerView.ViewHolder {
      * 视频
      */
     public final static int ADAPTER_TYPE_VIDEO = 2;
-
-    /**
-     * 音频
-     */
-    public final static int ADAPTER_TYPE_AUDIO = 3;
-
     protected final int screenWidth;
     protected final int screenHeight;
     protected final int screenAppInHeight;
@@ -52,8 +46,6 @@ public class BasePreviewHolder extends RecyclerView.ViewHolder {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(resource, parent, false);
         if (viewType == ADAPTER_TYPE_VIDEO) {
             return new PreviewVideoHolder(itemView);
-        } else if (viewType == ADAPTER_TYPE_AUDIO) {
-            return new PreviewAudioHolder(itemView);
         } else {
             return new PreviewImageHolder(itemView);
         }
@@ -76,15 +68,8 @@ public class BasePreviewHolder extends RecyclerView.ViewHolder {
      */
     public void bindData(LocalMedia media, int position) {
         String path = media.getAvailablePath();
-        int realWidth, realHeight;
-        if (media.isCut() && media.getCropImageWidth() > 0 && media.getCropImageHeight() > 0) {
-            realWidth = media.getCropImageWidth();
-            realHeight = media.getCropImageHeight();
-        } else {
-            realWidth = media.getWidth();
-            realHeight = media.getHeight();
-        }
-        int[] maxImageSize = BitmapUtils.getMaxImageSize(realWidth, realHeight);
+        int[] maxImageSize = BitmapUtils.getMaxImageSize(itemView.getContext(),
+                media.getWidth(), media.getHeight(), screenWidth, screenHeight);
         PictureSelectionConfig.imageEngine.loadImageBitmap(itemView.getContext(), path, maxImageSize[0], maxImageSize[1],
                 new OnCallbackListener<Bitmap>() {
                     @Override
@@ -141,19 +126,6 @@ public class BasePreviewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    /**
-     * onViewAttachedToWindow
-     */
-    public void onViewAttachedToWindow() {
-
-    }
-
-    /**
-     * onViewDetachedFromWindow
-     */
-    public void onViewDetachedFromWindow() {
-
-    }
 
     protected OnPreviewEventListener mPreviewEventListener;
 

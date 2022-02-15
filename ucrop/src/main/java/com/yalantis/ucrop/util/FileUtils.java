@@ -166,7 +166,7 @@ public class FileUtils {
      * @return
      */
     public static boolean isUrlHasVideo(String url) {
-        return !TextUtils.isEmpty(url) && url.toLowerCase().endsWith(".mp4");
+        return url.toLowerCase().endsWith(".mp4");
     }
 
     /**

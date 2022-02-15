@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.luck.picture.lib.config.PictureConfig;
-import com.luck.picture.lib.config.SelectMimeType;
 import com.luck.picture.lib.entity.LocalMedia;
 
 import java.lang.ref.WeakReference;
@@ -71,7 +70,7 @@ public final class PictureSelector {
     /**
      * @param chooseMode Select the type of picture you want，all or Picture or Video .
      * @return LocalMedia PictureSelectionModel
-     * Use {@link SelectMimeType}
+     * Use {@link com.luck.picture.lib.config.SelectMimeType}
      */
     public PictureSelectionModel openGallery(int chooseMode) {
         return new PictureSelectionModel(this, chooseMode);
@@ -80,22 +79,10 @@ public final class PictureSelector {
     /**
      * @param chooseMode Select the type of picture you want，Picture or Video.
      * @return LocalMedia PictureSelectionModel
-     * Use {@link SelectMimeType}
+     * Use {@link com.luck.picture.lib.config.SelectMimeType}
      */
-    public PictureSelectionCameraModel openCamera(int chooseMode) {
-        return new PictureSelectionCameraModel(this, chooseMode);
-    }
-
-    /**
-     * @param chooseMode Select the type of picture you want，all or Picture or Video .
-     * @return LocalMedia PictureSelectionSystemModel
-     * Use {@link SelectMimeType}
-     * <p>
-     * openSystemGallery mode only supports some APIs
-     * </p>
-     */
-    public PictureSelectionSystemModel openSystemGallery(int chooseMode) {
-        return new PictureSelectionSystemModel(this, chooseMode);
+    public PictureSelectionModel openCamera(int chooseMode) {
+        return new PictureSelectionModel(this, chooseMode, true);
     }
 
     /**
@@ -103,8 +90,8 @@ public final class PictureSelector {
      *
      * @return
      */
-    public PictureSelectionPreviewModel openPreview() {
-        return new PictureSelectionPreviewModel(this);
+    public PictureSelectionModel openPreview() {
+        return new PictureSelectionModel(this);
     }
 
     /**

@@ -1,11 +1,11 @@
 package com.luck.picture.lib;
 
 import android.annotation.SuppressLint;
-import android.app.Service;
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.os.Vibrator;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.RelativeLayout;
@@ -34,6 +34,7 @@ import com.luck.picture.lib.config.SelectMimeType;
 import com.luck.picture.lib.config.SelectModeConfig;
 import com.luck.picture.lib.decoration.GridSpacingItemDecoration;
 import com.luck.picture.lib.dialog.AlbumListPopWindow;
+import com.luck.picture.lib.dialog.AudioPlayDialog;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.entity.LocalMediaFolder;
 import com.luck.picture.lib.interfaces.OnAlbumItemClickListener;
@@ -64,13 +65,10 @@ import com.luck.picture.lib.utils.ValueOf;
 import com.luck.picture.lib.widget.BottomNavBar;
 import com.luck.picture.lib.widget.CompleteSelectView;
 import com.luck.picture.lib.widget.RecyclerPreloadView;
-import com.luck.picture.lib.widget.SlideSelectTouchListener;
-import com.luck.picture.lib.widget.SlideSelectionHandler;
 import com.luck.picture.lib.widget.TitleBar;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -85,7 +83,6 @@ public class PictureSelectorFragment extends PictureCommonFragment
      * 这个时间对应的是R.anim.ps_anim_modal_in里面的
      */
     private static final int SELECT_ANIM_DURATION = 135;
-
     private RecyclerPreloadView mRecycler;
 
     private TextView tvDataEmpty;
@@ -116,8 +113,6 @@ public class PictureSelectorFragment extends PictureCommonFragment
     private AlbumListPopWindow albumListPopWindow;
 
     private boolean isCameraMemoryRecycling;
-
-    private SlideSelectTouchListener mDragSelectTouchListener;
 
     public static PictureSelectorFragment newInstance() {
         PictureSelectorFragment fragment = new PictureSelectorFragment();
@@ -169,9 +164,10 @@ public class PictureSelectorFragment extends PictureCommonFragment
     @Override
     public void sendChangeSubSelectPositionEvent(boolean adapterChange) {
         if (PictureSelectionConfig.selectorStyle.getSelectMainStyle().isSelectNumberStyle()) {
-            for (int index = 0; index < SelectedManager.getSelectCount(); index++) {
+            for (int index = 0; index < SelectedManager.getCount(); index++) {
                 LocalMedia media = SelectedManager.getSelectedResult().get(index);
-                media.setNum(index + 1);
+                int start = config.photoStartNumber-1;
+                media.setNum(start+index + 1);
                 if (adapterChange) {
                     mAdapter.notifyItemPositionChanged(media.position);
                 }
@@ -192,27 +188,23 @@ public class PictureSelectorFragment extends PictureCommonFragment
      */
     private boolean checkNotifyStrategy(boolean isAddRemove) {
         boolean isNotifyAll = false;
-        if (config.isMaxSelectEnabledMask) {
+        if (config.isMaxSelectEnabledMask && config.selectionMode == SelectModeConfig.MULTIPLE) {
             if (config.isWithVideoImage) {
-                if (config.selectionMode == SelectModeConfig.SINGLE) {
-                    // ignore
-                } else {
-                    isNotifyAll = SelectedManager.getSelectCount() == config.maxSelectNum
-                            || (!isAddRemove && SelectedManager.getSelectCount() == config.maxSelectNum - 1);
-                }
+                isNotifyAll = SelectedManager.getCount() == config.maxSelectNum
+                        || (!isAddRemove && SelectedManager.getCount() == config.maxSelectNum - 1);
             } else {
-                if (SelectedManager.getSelectCount() == 0 || (isAddRemove && SelectedManager.getSelectCount() == 1)) {
-                    // 首次添加或单选，选择数量变为0了，都notifyDataSetChanged
+                if (SelectedManager.getCount() == 0 || (isAddRemove && SelectedManager.getCount() == 1)) {
+                    // 首次添加或者选择数量变为0了，都notifyDataSetChanged
                     isNotifyAll = true;
                 } else {
                     if (PictureMimeType.isHasVideo(SelectedManager.getTopResultMimeType())) {
                         int maxSelectNum = config.maxVideoSelectNum > 0
                                 ? config.maxVideoSelectNum : config.maxSelectNum;
-                        isNotifyAll = SelectedManager.getSelectCount() == maxSelectNum
-                                || (!isAddRemove && SelectedManager.getSelectCount() == maxSelectNum - 1);
+                        isNotifyAll = SelectedManager.getCount() == maxSelectNum
+                                || (!isAddRemove && SelectedManager.getCount() == maxSelectNum - 1);
                     } else {
-                        isNotifyAll = SelectedManager.getSelectCount() == config.maxSelectNum
-                                || (!isAddRemove && SelectedManager.getSelectCount() == config.maxSelectNum - 1);
+                        isNotifyAll = SelectedManager.getCount() == config.maxSelectNum
+                                || (!isAddRemove && SelectedManager.getCount() == config.maxSelectNum - 1);
                     }
                 }
             }
@@ -227,6 +219,21 @@ public class PictureSelectorFragment extends PictureCommonFragment
         outState.putInt(PictureConfig.EXTRA_CURRENT_PAGE, mPage);
         outState.putInt(PictureConfig.EXTRA_PREVIEW_CURRENT_POSITION, mRecycler.getLastVisiblePosition());
         outState.putBoolean(PictureConfig.EXTRA_DISPLAY_CAMERA, mAdapter.isDisplayCamera());
+    }
+
+    @Override
+    public void onKeyBackFragment() {
+        if (!ActivityCompatHelper.isDestroy(getActivity())) {
+            if (config.isActivityResultBack) {
+                getActivity().setResult(Activity.RESULT_CANCELED);
+                onSelectFinish(Activity.RESULT_CANCELED, null);
+            } else {
+                if (PictureSelectionConfig.onResultCallListener != null) {
+                    PictureSelectionConfig.onResultCallListener.onCancel();
+                }
+            }
+            onExitPictureSelector();
+        }
     }
 
     @Override
@@ -340,7 +347,7 @@ public class PictureSelectorFragment extends PictureCommonFragment
                 if (albumListPopWindow.isShowing()) {
                     albumListPopWindow.dismiss();
                 } else {
-                    onKeyBackFragmentFinish();
+                    onKeyBackFragment();
                 }
             }
 
@@ -432,7 +439,7 @@ public class PictureSelectorFragment extends PictureCommonFragment
             beginLoadData();
         } else {
             ToastUtils.showToast(getContext(), getString(R.string.ps_jurisdiction));
-            onKeyBackFragmentFinish();
+            onKeyBackFragment();
         }
     }
 
@@ -493,9 +500,6 @@ public class PictureSelectorFragment extends PictureCommonFragment
                 }
                 SelectedManager.setCurrentLocalMediaFolder(curFolder);
                 albumListPopWindow.dismiss();
-                if (mDragSelectTouchListener != null && config.isFastSlidingSelect) {
-                    mDragSelectTouchListener.setRecyclerViewHeaderCount(mAdapter.isDisplayCamera() ? 1 : 0);
-                }
             }
         });
     }
@@ -666,6 +670,7 @@ public class PictureSelectorFragment extends PictureCommonFragment
         }
     }
 
+
     private void initRecycler(View view) {
         mRecycler = view.findViewById(R.id.recycler);
         PictureSelectorStyle selectorStyle = PictureSelectionConfig.selectorStyle;
@@ -698,8 +703,25 @@ public class PictureSelectorFragment extends PictureCommonFragment
         } else {
             mRecycler.setHasFixedSize(true);
         }
+
         mAdapter = new PictureImageGridAdapter(getContext(), config);
         mAdapter.setDisplayCamera(isDisplayCamera);
+        mRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                Log.e(TAG, "当前的滚动的速度"+dy );
+                if (dy > 150) {
+                    if (PictureSelectionConfig.imageEngine != null) {
+                        PictureSelectionConfig.imageEngine.pauseRequests(getContext());
+                    }
+                }else  {
+                    if (PictureSelectionConfig.imageEngine != null) {
+                        PictureSelectionConfig.imageEngine.resumeRequests(getContext());
+                    }
+                }
+            }
+        });
         switch (config.animationMode) {
             case AnimationType.ALPHA_IN_ANIMATION:
                 mRecycler.setAdapter(new AlphaInAnimationAdapter(mAdapter));
@@ -711,10 +733,8 @@ public class PictureSelectorFragment extends PictureCommonFragment
                 mRecycler.setAdapter(mAdapter);
                 break;
         }
-
         addRecyclerAction();
     }
-
 
     private void addRecyclerAction() {
         mAdapter.setOnItemClickListener(new PictureImageGridAdapter.OnItemClickListener() {
@@ -730,6 +750,11 @@ public class PictureSelectorFragment extends PictureCommonFragment
             @Override
             public int onSelected(View selectedView, int position, LocalMedia media) {
                 int selectResultCode = confirmSelect(media, selectedView.isSelected());
+                if(PictureSelectionConfig.onPhotoSelectListener!=null)
+                {
+                    PictureSelectionConfig.onPhotoSelectListener
+                            .onPhotoSelect(!selectedView.isSelected(),SelectedManager.getSelectedResult(),media.getNum());
+                }
                 if (selectResultCode == SelectedManager.ADD_SUCCESS) {
                     selectedView.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.ps_anim_modal_in));
                 }
@@ -738,30 +763,24 @@ public class PictureSelectorFragment extends PictureCommonFragment
 
             @Override
             public void onItemClick(View selectedView, int position, LocalMedia media) {
+                media.setNeedShow(true);
                 if (config.selectionMode == SelectModeConfig.SINGLE && config.isDirectReturnSingle) {
-                    SelectedManager.clearSelectResult();
-                    int selectResultCode = confirmSelect(media, false);
-                    if (selectResultCode == SelectedManager.ADD_SUCCESS) {
-                        dispatchTransformResult();
-                    }
+                    SelectedManager.getSelectedResult().clear();
+                    SelectedManager.getSelectedResult().add(media);
+                    dispatchTransformResult();
                 } else {
                     if (DoubleUtils.isFastDoubleClick()) {
                         return;
                     }
-                    if (PictureMimeType.isHasAudio(media.getMimeType()) && PictureSelectionConfig.onPreviewInterceptListener != null) {
-                        PictureSelectionConfig.onPreviewInterceptListener.onPreviewAudio(getContext(), media);
+                    if (PictureMimeType.isHasAudio(media.getMimeType())) {
+                        if (PictureSelectionConfig.onPreviewInterceptListener != null) {
+                            PictureSelectionConfig.onPreviewInterceptListener.onPreviewAudio(getContext(), media);
+                        } else {
+                            AudioPlayDialog.showPlayAudioDialog(getActivity(), media.getPath());
+                        }
                     } else {
                         onStartPreview(position, false);
                     }
-                }
-            }
-
-            @Override
-            public void onItemLongClick(View itemView, int position) {
-                if (mDragSelectTouchListener != null && config.isFastSlidingSelect) {
-                    Vibrator vibrator = (Vibrator) getActivity().getSystemService(Service.VIBRATOR_SERVICE);
-                    vibrator.vibrate(50);
-                    mDragSelectTouchListener.startSlideSelection(position);
                 }
             }
         });
@@ -796,35 +815,6 @@ public class PictureSelectorFragment extends PictureCommonFragment
                 }
             }
         });
-
-        if (config.isFastSlidingSelect) {
-            HashSet<Integer> selectedPosition = new HashSet<>();
-            SlideSelectionHandler slideSelectionHandler = new SlideSelectionHandler(new SlideSelectionHandler.ISelectionHandler() {
-                @Override
-                public HashSet<Integer> getSelection() {
-                    for (int i = 0; i < SelectedManager.getSelectCount(); i++) {
-                        LocalMedia media = SelectedManager.getSelectedResult().get(i);
-                        selectedPosition.add(media.position);
-                    }
-                    return selectedPosition;
-                }
-
-                @Override
-                public void changeSelection(int start, int end, boolean isSelected, boolean calledFromOnStart) {
-                    ArrayList<LocalMedia> adapterData = mAdapter.getData();
-                    if (adapterData.size() == 0 || start > adapterData.size()) {
-                        return;
-                    }
-                    LocalMedia media = adapterData.get(start);
-                    int selectResultCode = confirmSelect(media, SelectedManager.getSelectedResult().contains(media));
-                    mDragSelectTouchListener.setActive(selectResultCode != SelectedManager.INVALID);
-                }
-            });
-            mDragSelectTouchListener = new SlideSelectTouchListener()
-                    .setRecyclerViewHeaderCount(mAdapter.isDisplayCamera() ? 1 : 0)
-                    .withSelectListener(slideSelectionHandler);
-            mRecycler.addOnItemTouchListener(mDragSelectTouchListener);
-        }
     }
 
     /**
@@ -980,7 +970,7 @@ public class PictureSelectorFragment extends PictureCommonFragment
             isCameraMemoryRecycling = false;
             // 这种情况一般就是拍照时内存不足了，导致Fragment重新创建了，先走的loadAllData已经获取到了拍照生成的这张
             // 如果这里还往下手动添加则会导致重复一张，故只要把新拍的加入选择结果即可
-            SelectedManager.addSelectResult(media);
+            SelectedManager.getSelectedResult().add(media);
             mAdapter.notifyItemPositionChanged(config.isDisplayCamera ? 1 : 0);
             if (config.isDirectReturnSingle) {
                 dispatchTransformResult();
@@ -993,11 +983,9 @@ public class PictureSelectorFragment extends PictureCommonFragment
             openCameraNumber++;
         }
         if (config.selectionMode == SelectModeConfig.SINGLE && config.isDirectReturnSingle) {
-            SelectedManager.clearSelectResult();
-            int selectResultCode = confirmSelect(media, false);
-            if (selectResultCode == SelectedManager.ADD_SUCCESS) {
-                dispatchTransformResult();
-            }
+            SelectedManager.getSelectedResult().clear();
+            SelectedManager.getSelectedResult().add(media);
+            dispatchTransformResult();
         } else {
             confirmSelect(media, false);
         }
@@ -1117,14 +1105,6 @@ public class PictureSelectorFragment extends PictureCommonFragment
             return limit;
         }
         return config.pageSize;
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (mDragSelectTouchListener != null) {
-            mDragSelectTouchListener.stopAutoScroll();
-        }
     }
 
     /**

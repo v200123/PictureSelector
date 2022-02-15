@@ -38,9 +38,7 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
     public Context mContext;
     public PictureSelectionConfig config;
     public boolean isSelectNumberStyle;
-    public boolean isHandleMask;
     private ColorFilter defaultColorFilter, selectColorFilter, maskWhiteColorFilter;
-
     public static BaseRecyclerMediaHolder generate(ViewGroup parent, int viewType, int resource, PictureSelectionConfig config) {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(resource, parent, false);
         switch (viewType) {
@@ -63,11 +61,11 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
         super(itemView);
         this.config = config;
         this.mContext = itemView.getContext();
-        defaultColorFilter = StyleUtils.getColorFilter(mContext, R.color.ps_color_20);
-        selectColorFilter = StyleUtils.getColorFilter(mContext, R.color.ps_color_80);
-        maskWhiteColorFilter = StyleUtils.getColorFilter(mContext, R.color.ps_color_half_white);
+        defaultColorFilter = StyleUtils.getColorFilter(mContext,R.color.ps_color_20);
+        selectColorFilter = StyleUtils.getColorFilter(mContext,R.color.ps_color_80);
+        maskWhiteColorFilter = StyleUtils.getColorFilter(mContext,R.color.ps_color_half_white);
         SelectMainStyle selectMainStyle = PictureSelectionConfig.selectorStyle.getSelectMainStyle();
-        isSelectNumberStyle = selectMainStyle.isSelectNumberStyle();
+        this.isSelectNumberStyle = selectMainStyle.isSelectNumberStyle();
         ivPicture = itemView.findViewById(R.id.ivPicture);
         tvCheck = itemView.findViewById(R.id.tvCheck);
         btnCheck = itemView.findViewById(R.id.btnCheck);
@@ -78,9 +76,6 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
             tvCheck.setVisibility(View.VISIBLE);
             btnCheck.setVisibility(View.VISIBLE);
         }
-
-        isHandleMask = !config.isDirectReturnSingle
-                && (config.selectionMode == SelectModeConfig.SINGLE || config.selectionMode == SelectModeConfig.MULTIPLE);
 
         int textSize = selectMainStyle.getAdapterSelectTextSize();
         if (StyleUtils.checkSizeValidity(textSize)) {
@@ -126,14 +121,12 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
      */
     public void bindData(LocalMedia media, int position) {
         media.position = getAbsoluteAdapterPosition();
-
         selectedMedia(isSelected(media));
-
         if (isSelectNumberStyle) {
             notifySelectNumberStyle(media);
         }
 
-        if (isHandleMask && config.isMaxSelectEnabledMask) {
+        if (config.isMaxSelectEnabledMask && config.selectionMode == SelectModeConfig.MULTIPLE) {
             dispatchHandleMask(media);
         }
 
@@ -141,8 +134,11 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
         if (media.isEditorImage()) {
             path = media.getCutPath();
         }
-
-        loadCover(path);
+        if (PictureMimeType.isHasAudio(media.getMimeType())) {
+            ivPicture.setImageResource(R.drawable.ps_trans_1px);
+        } else if (PictureSelectionConfig.imageEngine != null) {
+            PictureSelectionConfig.imageEngine.loadGridImage(ivPicture.getContext(), path, ivPicture);
+        }
 
         tvCheck.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -162,16 +158,6 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
                     return;
                 }
                 selectedMedia(isSelected(media));
-            }
-        });
-
-        itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (listener != null) {
-                    listener.onItemLongClick(v, position);
-                }
-                return false;
             }
         });
 
@@ -196,47 +182,23 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
         });
     }
 
-    /**
-     * 加载资源封面
-     */
-    protected void loadCover(String path) {
-        if (PictureSelectionConfig.imageEngine != null) {
-            PictureSelectionConfig.imageEngine.loadGridImage(ivPicture.getContext(), path, ivPicture);
-        }
-    }
-
 
     /**
      * 处理到达选择条件后的蒙层效果
      */
     private void dispatchHandleMask(LocalMedia media) {
         boolean isEnabledMask = false;
-        if (SelectedManager.getSelectCount() > 0 && !SelectedManager.getSelectedResult().contains(media)) {
+        if (SelectedManager.getCount() > 0 && !SelectedManager.getSelectedResult().contains(media)) {
             if (config.isWithVideoImage) {
-                if (config.selectionMode == SelectModeConfig.SINGLE) {
-                    isEnabledMask = SelectedManager.getSelectCount() == Integer.MAX_VALUE;
-                } else {
-                    isEnabledMask = SelectedManager.getSelectCount() == config.maxSelectNum;
-                }
+                isEnabledMask = SelectedManager.getCount() == config.maxSelectNum;
             } else {
                 if (PictureMimeType.isHasVideo(SelectedManager.getTopResultMimeType())) {
-                    int maxSelectNum;
-                    if (config.selectionMode == SelectModeConfig.SINGLE) {
-                        maxSelectNum = Integer.MAX_VALUE;
-                    } else {
-                        maxSelectNum = config.maxVideoSelectNum > 0
-                                ? config.maxVideoSelectNum : config.maxSelectNum;
-                    }
-                    isEnabledMask = SelectedManager.getSelectCount() == maxSelectNum
+                    int maxSelectNum = config.maxVideoSelectNum > 0
+                            ? config.maxVideoSelectNum : config.maxSelectNum;
+                    isEnabledMask = SelectedManager.getCount() == maxSelectNum
                             || PictureMimeType.isHasImage(media.getMimeType());
                 } else {
-                    int maxSelectNum;
-                    if (config.selectionMode == SelectModeConfig.SINGLE) {
-                        maxSelectNum = Integer.MAX_VALUE;
-                    } else {
-                        maxSelectNum = config.maxSelectNum;
-                    }
-                    isEnabledMask = SelectedManager.getSelectCount() == maxSelectNum
+                    isEnabledMask = SelectedManager.getCount() == config.maxSelectNum
                             || PictureMimeType.isHasVideo(media.getMimeType());
                 }
             }
@@ -273,7 +235,7 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
      */
     private boolean isSelected(LocalMedia currentMedia) {
         List<LocalMedia> selectedResult = SelectedManager.getSelectedResult();
-        boolean isSelected = selectedResult.contains(currentMedia);
+        boolean isSelected = selectedResult.contains(currentMedia)&&currentMedia.isNeedShow();
         if (isSelected) {
             LocalMedia compare = currentMedia.getCompareLocalMedia();
             if (compare != null && compare.isEditorImage()) {
@@ -290,13 +252,16 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
      */
     private void notifySelectNumberStyle(LocalMedia currentMedia) {
         tvCheck.setText("");
-        for (int i = 0; i < SelectedManager.getSelectCount(); i++) {
-            LocalMedia media = SelectedManager.getSelectedResult().get(i);
-            if (TextUtils.equals(media.getPath(), currentMedia.getPath())
-                    || media.getId() == currentMedia.getId()) {
-                currentMedia.setNum(media.getNum());
-                media.setPosition(currentMedia.getPosition());
-                tvCheck.setText(ValueOf.toString(currentMedia.getNum()));
+        if(currentMedia.isNeedShow()) {
+            for (int i = 0; i < SelectedManager.getCount(); i++) {
+                //修改这里的数量显示
+                LocalMedia media = SelectedManager.getSelectedResult().get(i);
+                if (TextUtils.equals(media.getPath(), currentMedia.getPath())
+                        || media.getId() == currentMedia.getId()) {
+                    currentMedia.setNum(media.getNum());
+                    media.setPosition(currentMedia.getPosition());
+                    tvCheck.setText(ValueOf.toString(currentMedia.getNum()));
+                }
             }
         }
     }

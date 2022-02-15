@@ -1,6 +1,8 @@
 package com.luck.pictureselector;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
@@ -16,7 +18,6 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.luck.picture.lib.engine.ImageEngine;
 import com.luck.picture.lib.interfaces.OnCallbackListener;
-import com.luck.picture.lib.utils.ActivityCompatHelper;
 
 /**
  * @author：luck
@@ -34,7 +35,7 @@ public class GlideEngine implements ImageEngine {
      */
     @Override
     public void loadImage(@NonNull Context context, @NonNull String url, @NonNull ImageView imageView) {
-        if (!ActivityCompatHelper.assertValidRequest(context)) {
+        if (!assertValidRequest(context)) {
             return;
         }
         Glide.with(context)
@@ -45,15 +46,13 @@ public class GlideEngine implements ImageEngine {
     /**
      * 加载指定url并返回bitmap
      *
-     * @param context   上下文
-     * @param url       资源url
-     * @param maxWidth  资源最大加载尺寸
-     * @param maxHeight 资源最大加载尺寸
-     * @param call      回调接口
+     * @param context 上下文
+     * @param url     资源url
+     * @param call    回调接口
      */
     @Override
     public void loadImageBitmap(@NonNull Context context, @NonNull String url, int maxWidth, int maxHeight, OnCallbackListener<Bitmap> call) {
-        if (!ActivityCompatHelper.assertValidRequest(context)) {
+        if (!assertValidRequest(context)) {
             return;
         }
         Glide.with(context)
@@ -93,7 +92,7 @@ public class GlideEngine implements ImageEngine {
      */
     @Override
     public void loadAlbumCover(@NonNull Context context, @NonNull String url, @NonNull ImageView imageView) {
-        if (!ActivityCompatHelper.assertValidRequest(context)) {
+        if (!assertValidRequest(context)) {
             return;
         }
         Glide.with(context)
@@ -125,7 +124,7 @@ public class GlideEngine implements ImageEngine {
      */
     @Override
     public void loadGridImage(@NonNull Context context, @NonNull String url, @NonNull ImageView imageView) {
-        if (!ActivityCompatHelper.assertValidRequest(context)) {
+        if (!assertValidRequest(context)) {
             return;
         }
         Glide.with(context)
@@ -144,6 +143,28 @@ public class GlideEngine implements ImageEngine {
     @Override
     public void resumeRequests(Context context) {
         Glide.with(context).resumeRequests();
+    }
+
+
+    public static boolean assertValidRequest(Context context) {
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            return !isDestroy(activity);
+        } else if (context instanceof ContextWrapper) {
+            ContextWrapper contextWrapper = (ContextWrapper) context;
+            if (contextWrapper.getBaseContext() instanceof Activity) {
+                Activity activity = (Activity) contextWrapper.getBaseContext();
+                return !isDestroy(activity);
+            }
+        }
+        return true;
+    }
+
+    private static boolean isDestroy(Activity activity) {
+        if (activity == null) {
+            return true;
+        }
+        return activity.isFinishing() || activity.isDestroyed();
     }
 
     private GlideEngine() {

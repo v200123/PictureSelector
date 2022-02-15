@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat;
 
 import com.luck.picture.lib.R;
 import com.luck.picture.lib.config.PictureSelectionConfig;
+import com.luck.picture.lib.config.SelectMimeType;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.manager.SelectedManager;
 import com.luck.picture.lib.style.BottomNavBarStyle;
@@ -56,6 +57,11 @@ public class BottomNavBar extends RelativeLayout implements View.OnClickListener
         originalCheckbox = findViewById(R.id.cb_original);
         tvPreview.setOnClickListener(this);
         tvImageEditor.setVisibility(GONE);
+        if (config.chooseMode == SelectMimeType.ofAudio()){
+            tvPreview.setVisibility(GONE);
+        } else {
+            tvPreview.setVisibility(VISIBLE);
+        }
         setBackgroundColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
         originalCheckbox.setChecked(config.isCheckOriginalImage);
         originalCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -65,7 +71,7 @@ public class BottomNavBar extends RelativeLayout implements View.OnClickListener
                 originalCheckbox.setChecked(config.isCheckOriginalImage);
                 if (bottomNavBarListener != null) {
                     bottomNavBarListener.onCheckOriginalChange();
-                    if (isChecked && SelectedManager.getSelectCount() == 0) {
+                    if (isChecked && SelectedManager.getCount() == 0) {
                         bottomNavBarListener.onFirstCheckOriginalSelectedChange();
                     }
                 }
@@ -182,7 +188,7 @@ public class BottomNavBar extends RelativeLayout implements View.OnClickListener
         calculateFileTotalSize();
         PictureSelectorStyle selectorStyle = PictureSelectionConfig.selectorStyle;
         BottomNavBarStyle bottomBarStyle = selectorStyle.getBottomBarStyle();
-        if (SelectedManager.getSelectCount() > 0) {
+        if (SelectedManager.getCount() > 0) {
             tvPreview.setEnabled(true);
             int previewSelectTextColor = bottomBarStyle.getBottomPreviewSelectTextColor();
             if (StyleUtils.checkStyleValidity(previewSelectTextColor)) {
@@ -193,12 +199,12 @@ public class BottomNavBar extends RelativeLayout implements View.OnClickListener
             String previewSelectText = bottomBarStyle.getBottomPreviewSelectText();
             if (StyleUtils.checkTextValidity(previewSelectText)) {
                 if (StyleUtils.checkTextFormatValidity(previewSelectText)) {
-                    tvPreview.setText(String.format(previewSelectText, SelectedManager.getSelectCount()));
+                    tvPreview.setText(String.format(previewSelectText, SelectedManager.getCount()));
                 } else {
                     tvPreview.setText(previewSelectText);
                 }
             } else {
-                tvPreview.setText(getContext().getString(R.string.ps_preview_num, SelectedManager.getSelectCount()));
+                tvPreview.setText(getContext().getString(R.string.ps_preview_num, SelectedManager.getCount()));
             }
         } else {
             tvPreview.setEnabled(false);
@@ -223,7 +229,7 @@ public class BottomNavBar extends RelativeLayout implements View.OnClickListener
     private void calculateFileTotalSize() {
         if (config.isOriginalControl) {
             long totalSize = 0;
-            for (int i = 0; i < SelectedManager.getSelectCount(); i++) {
+            for (int i = 0; i < SelectedManager.getCount(); i++) {
                 LocalMedia media = SelectedManager.getSelectedResult().get(i);
                 totalSize += media.getSize();
             }

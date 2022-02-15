@@ -3,16 +3,22 @@ package com.luck.picture.lib.utils;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.net.Uri;
+import android.view.Display;
+import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 
 import com.luck.picture.lib.basic.PictureContentResolver;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
@@ -30,46 +36,23 @@ public class BitmapUtils {
      * @param path    资源路径
      */
     public static void rotateImage(Context context, String path) {
-        InputStream inputStream = null;
-        FileOutputStream outputStream = null;
-        Bitmap bitmap = null;
         try {
             int degree = readPictureDegree(context, path);
             if (degree > 0) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inJustDecodeBounds = true;
-                if (PictureMimeType.isContent(path)) {
-                    inputStream = PictureContentResolver.getContentResolverOpenInputStream(context, Uri.parse(path));
-                    BitmapFactory.decodeStream(inputStream, null, options);
-                } else {
-                    BitmapFactory.decodeFile(path, options);
-                }
-                options.inSampleSize = computeSize(options.outWidth, options.outHeight);
-                options.inJustDecodeBounds = false;
-                if (PictureMimeType.isContent(path)) {
-                    inputStream = PictureContentResolver.getContentResolverOpenInputStream(context, Uri.parse(path));
-                    bitmap = BitmapFactory.decodeStream(inputStream, null, options);
-                } else {
-                    bitmap = BitmapFactory.decodeFile(path, options);
-                }
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inSampleSize = 2;
+                File file = new File(path);
+                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
                 if (bitmap != null) {
                     bitmap = rotatingImage(bitmap, degree);
-                    if (PictureMimeType.isContent(path)) {
-                        outputStream = (FileOutputStream) PictureContentResolver.getContentResolverOpenOutputStream(context, Uri.parse(path));
-                    } else {
-                        outputStream = new FileOutputStream(path);
-                    }
-                    saveBitmapFile(bitmap, outputStream);
+                }
+                if (bitmap != null) {
+                    saveBitmapFile(bitmap, file);
+                    bitmap.recycle();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            PictureFileUtils.close(inputStream);
-            PictureFileUtils.close(outputStream);
-            if (bitmap != null && !bitmap.isRecycled()) {
-                bitmap.recycle();
-            }
         }
     }
 
@@ -90,21 +73,18 @@ public class BitmapUtils {
      * 保存Bitmap至本地
      *
      * @param bitmap
-     * @param fos
+     * @param file
      */
-    private static void saveBitmapFile(Bitmap bitmap, FileOutputStream fos) {
-        ByteArrayOutputStream stream = null;
+    private static void saveBitmapFile(Bitmap bitmap, File file) {
+        BufferedOutputStream bos = null;
         try {
-            stream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 60, fos);
-            fos.write(stream.toByteArray());
-            fos.flush();
-            fos.close();
+            bos = new BufferedOutputStream(new FileOutputStream(file));
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, bos);
+            bos.flush();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            PictureFileUtils.close(fos);
-            PictureFileUtils.close(stream);
+            PictureFileUtils.close(bos);
         }
     }
 
@@ -148,54 +128,87 @@ public class BitmapUtils {
     /**
      * 获取图片的缩放比例
      *
-     * @param imageWidth  图片原始宽度
-     * @param imageHeight 图片原始高度
+     * @param width        图片原始宽度
+     * @param height       图片原始高度
+     * @param screenWidth  屏幕宽度
+     * @param screenHeight 屏幕高度
      * @return
      */
-    public static int[] getMaxImageSize(int imageWidth, int imageHeight) {
+    public static int[] getMaxImageSize(Context context,
+                                        int imageWidth, int imageHeight,
+                                        int screenWidth, int screenHeight) {
         if (imageWidth == 0 && imageHeight == 0) {
+            imageWidth = screenWidth;
+            imageHeight = screenHeight;
+        }
+        if (MediaUtils.isLongImage(imageWidth, imageHeight)) {
             return new int[]{PictureConfig.UNSET, PictureConfig.UNSET};
         }
-        int inSampleSize = BitmapUtils.computeSize(imageWidth, imageHeight);
-        if (MediaUtils.isLongImage(imageWidth, imageHeight)) {
-            if (inSampleSize == 1) {
-                inSampleSize = 2;
-            }
-        }
+        int maxBitmapSize = BitmapUtils.calculateMaxBitmapSize(context);
+        int inSampleSize = BitmapUtils.calculateInSampleSize(imageWidth, imageHeight, maxBitmapSize, maxBitmapSize);
         int newWidth = (imageWidth) / inSampleSize;
         int newHeight = (imageHeight) / inSampleSize;
         return new int[]{newWidth, newHeight};
     }
 
     /**
-     * 计算图片合适压缩比较
+     * calculateInSampleSize
      *
-     * @param srcWidth  资源宽度
-     * @param srcHeight 资源高度
+     * @param width
+     * @param height
+     * @param reqWidth
+     * @param reqHeight
      * @return
      */
-    public static int computeSize(int srcWidth, int srcHeight) {
-        srcWidth = srcWidth % 2 == 1 ? srcWidth + 1 : srcWidth;
-        srcHeight = srcHeight % 2 == 1 ? srcHeight + 1 : srcHeight;
-
-        int longSide = Math.max(srcWidth, srcHeight);
-        int shortSide = Math.min(srcWidth, srcHeight);
-
-        float scale = ((float) shortSide / longSide);
-        if (scale <= 1 && scale > 0.5625) {
-            if (longSide < 1664) {
-                return 1;
-            } else if (longSide < 4990) {
-                return 2;
-            } else if (longSide > 4990 && longSide < 10240) {
-                return 4;
-            } else {
-                return longSide / 1280;
+    private static int calculateInSampleSize(int width, int height, int reqWidth, int reqHeight) {
+        int inSampleSize = 1;
+        if (height > reqHeight || width > reqWidth) {
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width lower or equal to the requested height and width.
+            while ((height / inSampleSize) > reqHeight || (width / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
             }
-        } else if (scale <= 0.5625 && scale > 0.5) {
-            return longSide / 1280 == 0 ? 1 : longSide / 1280;
-        } else {
-            return (int) Math.ceil(longSide / (1280.0 / scale));
         }
+        return inSampleSize;
+    }
+
+    /**
+     * This method calculates maximum size of both width and height of bitmap.
+     * It is twice the device screen diagonal for default implementation (extra quality to zoom image).
+     * Size cannot exceed max texture size.
+     *
+     * @return - max bitmap size in pixels.
+     */
+    private static int calculateMaxBitmapSize(@NonNull Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display;
+        int width, height;
+        Point size = new Point();
+
+        if (wm != null) {
+            display = wm.getDefaultDisplay();
+            display.getSize(size);
+        }
+
+        width = size.x;
+        height = size.y;
+
+        // Twice the device screen diagonal as default
+        int maxBitmapSize = (int) Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+
+        // Check for max texture size via Canvas
+        Canvas canvas = new Canvas();
+        final int maxCanvasSize = Math.min(canvas.getMaximumBitmapWidth(), canvas.getMaximumBitmapHeight());
+        if (maxCanvasSize > 0) {
+            maxBitmapSize = Math.min(maxBitmapSize, maxCanvasSize);
+        }
+
+        // Check for max texture size via GL
+        final int maxTextureSize = PSEglUtils.getMaxTextureSize();
+        if (maxTextureSize > 0) {
+            maxBitmapSize = Math.min(maxBitmapSize, maxTextureSize);
+        }
+
+        return maxBitmapSize;
     }
 }

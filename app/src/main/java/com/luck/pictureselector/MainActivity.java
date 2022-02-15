@@ -1,9 +1,5 @@
 package com.luck.pictureselector;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,14 +8,10 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.text.style.AbsoluteSizeSpan;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -39,7 +31,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -50,9 +41,7 @@ import com.luck.picture.lib.animators.AnimationType;
 import com.luck.picture.lib.app.PictureAppMaster;
 import com.luck.picture.lib.basic.IBridgePictureBehavior;
 import com.luck.picture.lib.basic.PictureCommonFragment;
-import com.luck.picture.lib.basic.PictureSelectionCameraModel;
 import com.luck.picture.lib.basic.PictureSelectionModel;
-import com.luck.picture.lib.basic.PictureSelectionSystemModel;
 import com.luck.picture.lib.basic.PictureSelector;
 import com.luck.picture.lib.config.InjectResourceSource;
 import com.luck.picture.lib.config.PictureConfig;
@@ -62,6 +51,7 @@ import com.luck.picture.lib.config.SelectLimitType;
 import com.luck.picture.lib.config.SelectMimeType;
 import com.luck.picture.lib.config.SelectModeConfig;
 import com.luck.picture.lib.decoration.GridSpacingItemDecoration;
+import com.luck.picture.lib.dialog.AudioPlayDialog;
 import com.luck.picture.lib.engine.CompressEngine;
 import com.luck.picture.lib.engine.CropEngine;
 import com.luck.picture.lib.engine.ExtendLoaderEngine;
@@ -92,12 +82,10 @@ import com.luck.picture.lib.utils.DensityUtil;
 import com.luck.picture.lib.utils.MediaUtils;
 import com.luck.picture.lib.utils.SandboxTransformUtils;
 import com.luck.picture.lib.utils.SdkVersionUtils;
-import com.luck.picture.lib.utils.StyleUtils;
 import com.luck.picture.lib.utils.ToastUtils;
 import com.luck.picture.lib.utils.ValueOf;
 import com.luck.pictureselector.adapter.GridImageAdapter;
 import com.luck.pictureselector.listener.DragListener;
-import com.luck.pictureselector.listener.OnItemLongClickListener;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropImageEngine;
 import com.yalantis.ucrop.model.AspectRatio;
@@ -123,9 +111,6 @@ import top.zibin.luban.OnRenameListener;
 public class MainActivity extends AppCompatActivity implements IBridgePictureBehavior, View.OnClickListener,
         RadioGroup.OnCheckedChangeListener, CompoundButton.OnCheckedChangeListener {
     private final static String TAG = "PictureSelectorTag";
-    private final static int ACTIVITY_RESULT = 1;
-    private final static int CALLBACK_RESULT = 2;
-    private final static int LAUNCHER_RESULT = 3;
     private GridImageAdapter mAdapter;
     private int maxSelectNum = 9;
     private TextView tv_select_num;
@@ -138,20 +123,20 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
             cb_mode, cb_hide, cb_crop_circular, cb_crop_use_bitmap, cb_styleCrop, cb_showCropGrid,
             cb_showCropFrame, cb_preview_audio, cb_original, cb_single_back,
             cb_custom_camera, cbPage, cbEnabledMask, cbEditor, cb_custom_sandbox, cb_only_dir,
-            cb_preview_full, cb_preview_scale, cb_inject_layout, cb_time_axis, cb_WithImageVideo,
-            cb_system_album, cb_fast_select, cb_skip_not_gif, cb_not_gif, cb_attach_camera_mode,
-            cb_attach_system_mode;
+            cb_preview_full, cb_preview_scale, cb_inject_layout, cb_time_axis, cb_WithImageVideo;
     private int chooseMode = SelectMimeType.ofAll();
-    private boolean isHasLiftDelete;
+    private boolean isUpward;
     private boolean needScaleBig = true;
-    private boolean needScaleSmall = false;
+    private boolean needScaleSmall = true;
     private int language = LanguageConfig.UNKNOWN_LANGUAGE;
     private int x = 0, y = 0;
+    private ItemTouchHelper mItemTouchHelper;
+    private DragListener mDragListener;
     private int animationMode = AnimationType.DEFAULT_ANIMATION;
     private PictureSelectorStyle selectorStyle;
     private final List<LocalMedia> mData = new ArrayList<>();
     private ActivityResultLauncher<Intent> launcherResult;
-    private int resultMode = LAUNCHER_RESULT;
+    private int resultMode = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,8 +160,6 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         cb_isCamera = findViewById(R.id.cb_isCamera);
         cb_isGif = findViewById(R.id.cb_isGif);
         cb_WithImageVideo = findViewById(R.id.cbWithImageVideo);
-        cb_system_album = findViewById(R.id.cb_system_album);
-        cb_fast_select = findViewById(R.id.cb_fast_select);
         cb_preview_full = findViewById(R.id.cb_preview_full);
         cb_preview_scale = findViewById(R.id.cb_preview_scale);
         cb_inject_layout = findViewById(R.id.cb_inject_layout);
@@ -199,13 +182,8 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         cb_single_back = findViewById(R.id.cb_single_back);
         cb_custom_camera = findViewById(R.id.cb_custom_camera);
         cb_hide = findViewById(R.id.cb_hide);
-        cb_not_gif = findViewById(R.id.cb_not_gif);
-        cb_skip_not_gif = findViewById(R.id.cb_skip_not_gif);
         cb_crop_circular = findViewById(R.id.cb_crop_circular);
         cb_crop_use_bitmap = findViewById(R.id.cb_crop_use_bitmap);
-        cb_attach_camera_mode = findViewById(R.id.cb_attach_camera_mode);
-        cb_attach_system_mode = findViewById(R.id.cb_attach_system_mode);
-        cb_mode.setOnCheckedChangeListener(this);
         rgb_crop.setOnCheckedChangeListener(this);
         rgb_result.setOnCheckedChangeListener(this);
         rgb_style.setOnCheckedChangeListener(this);
@@ -223,12 +201,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         cb_custom_sandbox.setOnCheckedChangeListener(this);
         cb_crop_circular.setOnCheckedChangeListener(this);
         cb_crop_use_bitmap.setOnCheckedChangeListener(this);
-        cb_attach_camera_mode.setOnCheckedChangeListener(this);
-        cb_attach_system_mode.setOnCheckedChangeListener(this);
-        cb_system_album.setOnCheckedChangeListener(this);
         cb_compress.setOnCheckedChangeListener(this);
-        cb_not_gif.setOnCheckedChangeListener(this);
-        cb_skip_not_gif.setOnCheckedChangeListener(this);
         tv_select_num.setText(ValueOf.toString(maxSelectNum));
 
         // 注册需要写在onCreate或Fragment onAttach里，否则会报java.lang.IllegalStateException异常
@@ -242,10 +215,6 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         FullyGridLayoutManager manager = new FullyGridLayoutManager(this,
                 4, GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(manager);
-        RecyclerView.ItemAnimator itemAnimator = mRecyclerView.getItemAnimator();
-        if (itemAnimator != null) {
-            ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
-        }
         mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(4,
                 DensityUtil.dip2px(this, 8), false));
         mAdapter = new GridImageAdapter(getContext(), mData);
@@ -256,34 +225,6 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
             mData.addAll(savedInstanceState.getParcelableArrayList("selectorList"));
         }
 
-        String systemHigh = " (仅支持部分api)";
-        String systemTips = "使用系统图库" + systemHigh;
-        int startIndex = systemTips.indexOf(systemHigh);
-        int endOf = startIndex + systemHigh.length();
-        SpannableStringBuilder builder = new SpannableStringBuilder(systemTips);
-        builder.setSpan(new AbsoluteSizeSpan(DensityUtil.dip2px(getContext(), 12)), startIndex, endOf, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        builder.setSpan(new ForegroundColorSpan(0xFFCC0000), startIndex, endOf, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        cb_system_album.setText(builder);
-
-        String cameraHigh = " (默认fragment)";
-        String cameraTips = "使用Activity承载Camera相机" + cameraHigh;
-        int startIndex2 = cameraTips.indexOf(cameraHigh);
-        int endOf2 = startIndex2 + cameraHigh.length();
-        SpannableStringBuilder builder2 = new SpannableStringBuilder(cameraTips);
-        builder2.setSpan(new AbsoluteSizeSpan(DensityUtil.dip2px(getContext(), 12)), startIndex2, endOf2, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        builder2.setSpan(new ForegroundColorSpan(0xFFCC0000), startIndex2, endOf2, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        cb_attach_camera_mode.setText(builder2);
-
-
-        String systemAlbumHigh = " (默认fragment)";
-        String systemAlbumTips = "使用Activity承载系统相册" + systemAlbumHigh;
-        int startIndex3 = systemAlbumTips.indexOf(systemAlbumHigh);
-        int endOf3 = startIndex3 + systemAlbumHigh.length();
-        SpannableStringBuilder builder3 = new SpannableStringBuilder(systemAlbumTips);
-        builder3.setSpan(new AbsoluteSizeSpan(DensityUtil.dip2px(getContext(), 12)), startIndex3, endOf3, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        builder3.setSpan(new ForegroundColorSpan(0xFFCC0000), startIndex3, endOf3, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        cb_attach_system_mode.setText(builder3);
-
         cb_original.setOnCheckedChangeListener((buttonView, isChecked) ->
                 tv_original_tips.setVisibility(isChecked ? View.VISIBLE : View.GONE));
         cb_choose_mode.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -293,328 +234,276 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         mAdapter.setOnItemClickListener(new GridImageAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
-                // 预览图片、视频、音频
-                PictureSelector.create(MainActivity.this)
-                        .openPreview()
-                        .setImageEngine(GlideEngine.createGlideEngine())
-                        .setSelectorUIStyle(selectorStyle)
-                        .setLanguage(language)
-                        .isPreviewFullScreenMode(cb_preview_full.isChecked())
-                        .setExternalPreviewEventListener(new OnExternalPreviewEventListener() {
-                            @Override
-                            public void onPreviewDelete(int position) {
-                                mAdapter.remove(position);
-                                mAdapter.notifyItemRemoved(position);
-                            }
+                ArrayList<LocalMedia> selectList = mAdapter.getData();
+                if (selectList.size() > 0) {
+                    LocalMedia media = selectList.get(position);
+                    String availablePath = media.getAvailablePath();
+                    if (PictureMimeType.isHasAudio(media.getMimeType())) {
+                        // 预览音频
+                        AudioPlayDialog.showPlayAudioDialog(getContext(), availablePath);
+                    } else {
+                        // 预览图片 or 预览视频
+                        PictureSelector.create(MainActivity.this)
+                                .openPreview()
+                                .setImageEngine(GlideEngine.createGlideEngine())
+                                .setSelectorUIStyle(selectorStyle)
+                                .setLanguage(language)
+                                .isPreviewFullScreenMode(cb_preview_full.isChecked())
+                                .isPreviewZoomEffect(cb_preview_scale.isChecked())
+                                .setExternalPreviewEventListener(new OnExternalPreviewEventListener() {
+                                    @Override
+                                    public void onPreviewDelete(int position) {
+                                        mAdapter.remove(position);
+                                        mAdapter.notifyItemRemoved(position);
+                                    }
 
-                            @Override
-                            public boolean onLongPressDownload(LocalMedia media) {
-                                return false;
-                            }
-                        })
-                        .startActivityPreview(position, true, mAdapter.getData());
+                                    @Override
+                                    public boolean onLongPressDownload(LocalMedia media) {
+                                        return false;
+                                    }
+                                })
+                                .startActivityPreview(position, true, selectList);
+                    }
+                }
             }
 
             @Override
             public void openPicture() {
                 boolean mode = cb_mode.isChecked();
+                PictureSelectionModel model;
                 if (mode) {
-                    // 进入系统相册
-                    if (cb_system_album.isChecked()) {
-                        PictureSelectionSystemModel systemGalleryMode = PictureSelector.create(getContext())
-                                .openSystemGallery(chooseMode)
-                                .setSelectionMode(cb_choose_mode.isChecked() ? SelectModeConfig.MULTIPLE : SelectModeConfig.SINGLE)
-                                .setCompressEngine(getCompressEngine())
-                                .setCropEngine(getCropEngine())
-                                .setSkipCropMimeType(getNotSupportCrop())
-                                .isOriginalControl(cb_original.isChecked())
-                                .setSandboxFileEngine(new MeSandboxFileEngine());
-                        forSystemResult(systemGalleryMode);
-                    } else {
-                        // 进入相册
-                        PictureSelectionModel selectionModel = PictureSelector.create(getContext())
-                                .openGallery(chooseMode)
-                                .setSelectorUIStyle(selectorStyle)
-                                .setImageEngine(GlideEngine.createGlideEngine())
-                                .setCropEngine(getCropEngine())
-                                .setCompressEngine(getCompressEngine())
-                                .setSandboxFileEngine(new MeSandboxFileEngine())
-                                .setCameraInterceptListener(getCustomCameraEvent())
-                                .setSelectLimitTipsListener(new MeOnSelectLimitTipsListener())
-                                .setEditMediaInterceptListener(getCustomEditMediaEvent())
-                                //.setExtendLoaderEngine(getExtendLoaderEngine())
-                                .setInjectLayoutResourceListener(getInjectLayoutResource())
-                                .setSelectionMode(cb_choose_mode.isChecked() ? SelectModeConfig.MULTIPLE : SelectModeConfig.SINGLE)
-                                .setLanguage(language)
-                                .setOutputCameraDir(chooseMode == SelectMimeType.ofAudio()
-                                        ? getSandboxAudioOutputPath() : getSandboxCameraOutputPath())
-                                .setOutputAudioDir(chooseMode == SelectMimeType.ofAudio()
-                                        ? getSandboxAudioOutputPath() : getSandboxCameraOutputPath())
-                                .setQuerySandboxDir(chooseMode == SelectMimeType.ofAudio()
-                                        ? getSandboxAudioOutputPath() : getSandboxCameraOutputPath())
-                                .isDisplayTimeAxis(cb_time_axis.isChecked())
-                                .isOnlyObtainSandboxDir(cb_only_dir.isChecked())
-                                .isPageStrategy(cbPage.isChecked())
-                                .isOriginalControl(cb_original.isChecked())
-                                .isDisplayCamera(cb_isCamera.isChecked())
-                                .isOpenClickSound(cb_voice.isChecked())
-                                .setSkipCropMimeType(getNotSupportCrop())
-                                .isFastSlidingSelect(cb_fast_select.isChecked())
-                                //.setOutputCameraImageFileName("luck.jpeg")
-                                //.setOutputCameraVideoFileName("luck.mp4")
-                                .isWithSelectVideoImage(cb_WithImageVideo.isChecked())
-                                .isPreviewFullScreenMode(cb_preview_full.isChecked())
-                                .isPreviewZoomEffect(cb_preview_scale.isChecked())
-                                .isPreviewImage(cb_preview_img.isChecked())
-                                .isPreviewVideo(cb_preview_video.isChecked())
-                                .isPreviewAudio(cb_preview_audio.isChecked())
-                                //.setQueryOnlyMimeType(PictureMimeType.ofGIF())
-                                .isMaxSelectEnabledMask(cbEnabledMask.isChecked())
-                                .isDirectReturnSingle(cb_single_back.isChecked())
-                                .setMaxSelectNum(maxSelectNum)
-                                .setRecyclerAnimationMode(animationMode)
-                                .isGif(cb_isGif.isChecked())
-                                .setSelectedData(mAdapter.getData());
-                        forSelectResult(selectionModel);
-                    }
+                    // 进入相册
+                    model = PictureSelector.create(getContext())
+                            .openGallery(chooseMode)
+                            .setSelectorUIStyle(selectorStyle)
+                            .setImageEngine(GlideEngine.createGlideEngine())
+                            .setCropEngine(getCropEngine())
+                            .setCompressEngine(getCompressEngine())
+                            .setSandboxFileEngine(new MeSandboxFileEngine())
+                            .setCameraInterceptListener(getCustomCameraEvent())
+                            .setSelectLimitTipsListener(new MeOnSelectLimitTipsListener())
+                            .setEditMediaInterceptListener(getCustomEditMediaEvent())
+                            //.setExtendLoaderEngine(getExtendLoaderEngine())
+                            .setInjectLayoutResourceListener(getInjectLayoutResource())
+                            .setSelectionMode(cb_choose_mode.isChecked() ? SelectModeConfig.MULTIPLE : SelectModeConfig.SINGLE)
+                            .setLanguage(language)
+                            .setOutputCameraDir(chooseMode == SelectMimeType.ofAudio()
+                                    ? getSandboxAudioOutputPath() : getSandboxCameraOutputPath())
+                            .setOutputAudioDir(chooseMode == SelectMimeType.ofAudio()
+                                    ? getSandboxAudioOutputPath() : getSandboxCameraOutputPath())
+                            .setQuerySandboxDir(chooseMode == SelectMimeType.ofAudio()
+                                    ? getSandboxAudioOutputPath() : getSandboxCameraOutputPath())
+                            .isDisplayTimeAxis(cb_time_axis.isChecked())
+                            .isOnlyObtainSandboxDir(cb_only_dir.isChecked())
+                            .isPageStrategy(cbPage.isChecked())
+                            .isOriginalControl(cb_original.isChecked())
+                            .isDisplayCamera(cb_isCamera.isChecked())
+                            .isOpenClickSound(cb_voice.isChecked())
+                            .setSelectStartNumber(20)
+                            //.setOutputCameraImageFileName("luck.jpeg")
+                            //.setOutputCameraVideoFileName("luck.mp4")
+                            .isWithSelectVideoImage(cb_WithImageVideo.isChecked())
+                            .isPreviewFullScreenMode(cb_preview_full.isChecked())
+                            .isPreviewZoomEffect(cb_preview_scale.isChecked())
+                            .isPreviewImage(cb_preview_img.isChecked())
+                            .isPreviewVideo(cb_preview_video.isChecked())
+                            .isPreviewAudio(cb_preview_audio.isChecked())
+                            //.setQueryOnlyMimeType(PictureMimeType.ofGIF())
+                            .isMaxSelectEnabledMask(cbEnabledMask.isChecked())
+                            .isDirectReturnSingle(cb_single_back.isChecked())
+                            .setMaxSelectNum(maxSelectNum)
+                            .setRecyclerAnimationMode(animationMode)
+                            .isGif(cb_isGif.isChecked())
+                            .setSelectedData(mAdapter.getData());
                 } else {
                     // 单独拍照
-                    PictureSelectionCameraModel cameraModel = PictureSelector.create(MainActivity.this)
+                    model = PictureSelector.create(MainActivity.this)
                             .openCamera(chooseMode)
                             .setCameraInterceptListener(getCustomCameraEvent())
                             .setCropEngine(getCropEngine())
                             .setCompressEngine(getCompressEngine())
                             .setSandboxFileEngine(new MeSandboxFileEngine())
-                            .isOriginalControl(cb_original.isChecked())
-                            .setOutputAudioDir(getSandboxAudioOutputPath())
-                            .setSelectedData(mAdapter.getData());
-                    forOnlyCameraResult(cameraModel);
+                            .isOriginalControl(cb_original.isChecked());
+                }
+                forResult(model);
+            }
+        });
+
+        mAdapter.setItemLongClickListener((holder, position, v) -> {
+            //如果item不是最后一个，则执行拖拽
+            needScaleBig = true;
+            needScaleSmall = true;
+            int size = mAdapter.getData().size();
+            if (size != maxSelectNum) {
+                mItemTouchHelper.startDrag(holder);
+                return;
+            }
+            if (holder.getLayoutPosition() != size - 1) {
+                mItemTouchHelper.startDrag(holder);
+            }
+        });
+
+        mDragListener = new DragListener() {
+            @Override
+            public void deleteState(boolean isDelete) {
+                if (isDelete) {
+                    tvDeleteText.setText(getString(R.string.app_let_go_drag_delete));
+                    tvDeleteText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, R.drawable.ic_let_go_delete, 0, 0);
+                } else {
+                    tvDeleteText.setText(getString(R.string.app_drag_delete));
+                    tvDeleteText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, R.drawable.ps_ic_delete, 0, 0);
+                }
+
+            }
+
+            @Override
+            public void dragState(boolean isStart) {
+                int visibility = tvDeleteText.getVisibility();
+                if (isStart) {
+                    if (visibility == View.GONE) {
+                        tvDeleteText.animate().alpha(1).setDuration(300).setInterpolator(new AccelerateInterpolator());
+                        tvDeleteText.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    if (visibility == View.VISIBLE) {
+                        tvDeleteText.animate().alpha(0).setDuration(300).setInterpolator(new AccelerateInterpolator());
+                        tvDeleteText.setVisibility(View.GONE);
+                    }
+                }
+            }
+        };
+
+        mItemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                int itemViewType = viewHolder.getItemViewType();
+                if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
+                    viewHolder.itemView.setAlpha(0.7f);
+                }
+                return makeMovementFlags(ItemTouchHelper.DOWN | ItemTouchHelper.UP
+                        | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                //得到item原来的position
+                try {
+                    int fromPosition = viewHolder.getAdapterPosition();
+                    //得到目标position
+                    int toPosition = target.getAdapterPosition();
+                    int itemViewType = target.getItemViewType();
+                    if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
+                        if (fromPosition < toPosition) {
+                            for (int i = fromPosition; i < toPosition; i++) {
+                                Collections.swap(mAdapter.getData(), i, i + 1);
+                            }
+                        } else {
+                            for (int i = fromPosition; i > toPosition; i--) {
+                                Collections.swap(mAdapter.getData(), i, i - 1);
+                            }
+                        }
+                        mAdapter.notifyItemMoved(fromPosition, toPosition);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                int itemViewType = viewHolder.getItemViewType();
+                if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
+                    if (null == mDragListener) {
+                        return;
+                    }
+                    if (needScaleBig) {
+                        //如果需要执行放大动画
+                        viewHolder.itemView.animate().scaleXBy(0.1f).scaleYBy(0.1f).setDuration(100);
+                        //执行完成放大动画,标记改掉
+                        needScaleBig = false;
+                        //默认不需要执行缩小动画，当执行完成放大 并且松手后才允许执行
+                        needScaleSmall = false;
+                    }
+                    int sh = recyclerView.getHeight() + tvDeleteText.getHeight();
+                    int ry = tvDeleteText.getBottom() - sh;
+                    if (dY >= ry) {
+                        //拖到删除处
+                        mDragListener.deleteState(true);
+                        if (isUpward) {
+                            //在删除处放手，则删除item
+                            viewHolder.itemView.setVisibility(View.INVISIBLE);
+                            mAdapter.delete(viewHolder.getAdapterPosition());
+                            resetState();
+                            return;
+                        }
+                    } else {//没有到删除处
+                        if (View.INVISIBLE == viewHolder.itemView.getVisibility()) {
+                            //如果viewHolder不可见，则表示用户放手，重置删除区域状态
+                            mDragListener.dragState(false);
+                        }
+                        if (needScaleSmall) {//需要松手后才能执行
+                            viewHolder.itemView.animate().scaleXBy(1f).scaleYBy(1f).setDuration(100);
+                        }
+                        mDragListener.deleteState(false);
+                    }
+                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                }
+            }
+
+            @Override
+            public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+                int itemViewType = viewHolder != null ? viewHolder.getItemViewType() : GridImageAdapter.TYPE_CAMERA;
+                if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
+                    if (ItemTouchHelper.ACTION_STATE_DRAG == actionState && mDragListener != null) {
+                        mDragListener.dragState(true);
+                    }
+                    super.onSelectedChanged(viewHolder, actionState);
+                }
+            }
+
+            @Override
+            public long getAnimationDuration(@NonNull RecyclerView recyclerView, int animationType, float animateDx, float animateDy) {
+                needScaleSmall = true;
+                isUpward = true;
+                return super.getAnimationDuration(recyclerView, animationType, animateDx, animateDy);
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                int itemViewType = viewHolder.getItemViewType();
+                if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
+                    viewHolder.itemView.setAlpha(1.0f);
+                    super.clearView(recyclerView, viewHolder);
+                    mAdapter.notifyDataSetChanged();
+                    resetState();
                 }
             }
         });
 
-        mAdapter.setItemLongClickListener(new OnItemLongClickListener() {
-            @Override
-            public void onItemLongClick(RecyclerView.ViewHolder holder, int position, View v) {
-                int itemViewType = holder.getItemViewType();
-                if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
-                    mItemTouchHelper.startDrag(holder);
-                }
-            }
-        });
         // 绑定拖拽事件
         mItemTouchHelper.attachToRecyclerView(mRecyclerView);
+
         // 清除缓存
 //        clearCache();
     }
 
-    private String[] getNotSupportCrop() {
-        if (cb_skip_not_gif.isChecked()) {
-            return new String[]{PictureMimeType.ofGIF(), PictureMimeType.ofWEBP()};
-        }
-        return null;
-    }
-
-    private final ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
-        @Override
-        public boolean isLongPressDragEnabled() {
-            return true;
-        }
-
-        @Override
-        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        }
-
-        @Override
-        public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-            int itemViewType = viewHolder.getItemViewType();
-            if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
-                viewHolder.itemView.setAlpha(0.7f);
-            }
-            return makeMovementFlags(ItemTouchHelper.DOWN | ItemTouchHelper.UP
-                    | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0);
-        }
-
-        @Override
-        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-            try {
-                //得到item原来的position
-                int fromPosition = viewHolder.getAbsoluteAdapterPosition();
-                //得到目标position
-                int toPosition = target.getAbsoluteAdapterPosition();
-                int itemViewType = target.getItemViewType();
-                if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
-                    if (fromPosition < toPosition) {
-                        for (int i = fromPosition; i < toPosition; i++) {
-                            Collections.swap(mAdapter.getData(), i, i + 1);
-                        }
-                    } else {
-                        for (int i = fromPosition; i > toPosition; i--) {
-                            Collections.swap(mAdapter.getData(), i, i - 1);
-                        }
-                    }
-                    mAdapter.notifyItemMoved(fromPosition, toPosition);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return true;
-        }
-
-        @Override
-        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
-                                @NonNull RecyclerView.ViewHolder viewHolder, float dx, float dy, int actionState, boolean isCurrentlyActive) {
-            int itemViewType = viewHolder.getItemViewType();
-            if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
-                if (needScaleBig) {
-                    needScaleBig = false;
-                    AnimatorSet animatorSet = new AnimatorSet();
-                    animatorSet.playTogether(
-                            ObjectAnimator.ofFloat(viewHolder.itemView, "scaleX", 1.0F, 1.1F),
-                            ObjectAnimator.ofFloat(viewHolder.itemView, "scaleY", 1.0F, 1.1F));
-                    animatorSet.setDuration(50);
-                    animatorSet.setInterpolator(new LinearInterpolator());
-                    animatorSet.start();
-                    animatorSet.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            needScaleSmall = true;
-                        }
-                    });
-                }
-                int targetDy = tvDeleteText.getTop() - viewHolder.itemView.getBottom();
-                if (dy >= targetDy) {
-                    //拖到删除处
-                    mDragListener.deleteState(true);
-                    if (isHasLiftDelete) {
-                        //在删除处放手，则删除item
-                        viewHolder.itemView.setVisibility(View.INVISIBLE);
-                        mAdapter.delete(viewHolder.getAbsoluteAdapterPosition());
-                        resetState();
-                        return;
-                    }
-                } else {
-                    //没有到删除处
-                    if (View.INVISIBLE == viewHolder.itemView.getVisibility()) {
-                        //如果viewHolder不可见，则表示用户放手，重置删除区域状态
-                        mDragListener.dragState(false);
-                    }
-                    mDragListener.deleteState(false);
-                }
-                super.onChildDraw(c, recyclerView, viewHolder, dx, dy, actionState, isCurrentlyActive);
-            }
-        }
-
-        @Override
-        public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-            int itemViewType = viewHolder != null ? viewHolder.getItemViewType() : GridImageAdapter.TYPE_CAMERA;
-            if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
-                if (ItemTouchHelper.ACTION_STATE_DRAG == actionState) {
-                    mDragListener.dragState(true);
-                }
-                super.onSelectedChanged(viewHolder, actionState);
-            }
-        }
-
-        @Override
-        public long getAnimationDuration(@NonNull RecyclerView recyclerView, int animationType, float animateDx, float animateDy) {
-            isHasLiftDelete = true;
-            return super.getAnimationDuration(recyclerView, animationType, animateDx, animateDy);
-        }
-
-        @Override
-        public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-            int itemViewType = viewHolder.getItemViewType();
-            if (itemViewType != GridImageAdapter.TYPE_CAMERA) {
-                viewHolder.itemView.setAlpha(1.0F);
-                if (needScaleSmall) {
-                    needScaleSmall = false;
-                    AnimatorSet animatorSet = new AnimatorSet();
-                    animatorSet.playTogether(
-                            ObjectAnimator.ofFloat(viewHolder.itemView, "scaleX", 1.1F, 1.0F),
-                            ObjectAnimator.ofFloat(viewHolder.itemView, "scaleY", 1.1F, 1.0F));
-                    animatorSet.setInterpolator(new LinearInterpolator());
-                    animatorSet.setDuration(50);
-                    animatorSet.start();
-                    animatorSet.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            needScaleBig = true;
-                        }
-                    });
-                }
-                super.clearView(recyclerView, viewHolder);
-                mAdapter.notifyItemChanged(viewHolder.getAbsoluteAdapterPosition());
-                resetState();
-            }
-        }
-    });
-
-    private final DragListener mDragListener = new DragListener() {
-        @Override
-        public void deleteState(boolean isDelete) {
-            if (isDelete) {
-                if (!TextUtils.equals(getString(R.string.app_let_go_drag_delete), tvDeleteText.getText())) {
-                    tvDeleteText.setText(getString(R.string.app_let_go_drag_delete));
-                    tvDeleteText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, R.drawable.ic_dump_delete, 0, 0);
-                }
-            } else {
-                if (!TextUtils.equals(getString(R.string.app_drag_delete), tvDeleteText.getText())) {
-                    tvDeleteText.setText(getString(R.string.app_drag_delete));
-                    tvDeleteText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, R.drawable.ic_normal_delete, 0, 0);
-                }
-            }
-
-        }
-
-        @Override
-        public void dragState(boolean isStart) {
-            if (isStart) {
-                if (tvDeleteText.getAlpha() == 0F) {
-                    ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(tvDeleteText, "alpha", 0F, 1F);
-                    alphaAnimator.setInterpolator(new LinearInterpolator());
-                    alphaAnimator.setDuration(120);
-                    alphaAnimator.start();
-                }
-            } else {
-                if (tvDeleteText.getAlpha() == 1F) {
-                    ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(tvDeleteText, "alpha", 1F, 0F);
-                    alphaAnimator.setInterpolator(new LinearInterpolator());
-                    alphaAnimator.setDuration(120);
-                    alphaAnimator.start();
-                }
-            }
-        }
-    };
-
-    private void forSystemResult(PictureSelectionSystemModel model) {
-        if (cb_attach_system_mode.isChecked()) {
-            switch (resultMode) {
-                case ACTIVITY_RESULT:
-                    model.forSystemResultActivity(PictureConfig.REQUEST_CAMERA);
-                    break;
-                case CALLBACK_RESULT:
-                    model.forSystemResultActivity(new MeOnResultCallbackListener());
-                    break;
-                default:
-                    model.forSystemResultActivity(launcherResult);
-                    break;
-            }
-        } else {
-            if (resultMode == CALLBACK_RESULT) {
-                model.forSystemResult(new MeOnResultCallbackListener());
-            } else {
-                model.forSystemResult();
-            }
-        }
-    }
-
-    private void forSelectResult(PictureSelectionModel model) {
+    private void forResult(PictureSelectionModel model) {
         switch (resultMode) {
-            case ACTIVITY_RESULT:
+            case 1:
                 model.forResult(PictureConfig.CHOOSE_REQUEST);
                 break;
-            case CALLBACK_RESULT:
+            case 2:
                 model.forResult(new MeOnResultCallbackListener());
                 break;
             default:
@@ -623,35 +512,15 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         }
     }
 
-    private void forOnlyCameraResult(PictureSelectionCameraModel model) {
-        if (cb_attach_camera_mode.isChecked()) {
-            switch (resultMode) {
-                case ACTIVITY_RESULT:
-                    model.forResultActivity(PictureConfig.REQUEST_CAMERA);
-                    break;
-                case CALLBACK_RESULT:
-                    model.forResultActivity(new MeOnResultCallbackListener());
-                    break;
-                default:
-                    model.forResultActivity(launcherResult);
-                    break;
-            }
-        } else {
-            if (resultMode == CALLBACK_RESULT) {
-                model.forResult(new MeOnResultCallbackListener());
-            } else {
-                model.forResult();
-            }
-        }
-    }
-
     /**
      * 重置
      */
     private void resetState() {
-        isHasLiftDelete = false;
-        mDragListener.deleteState(false);
-        mDragListener.dragState(false);
+        if (mDragListener != null) {
+            mDragListener.deleteState(false);
+            mDragListener.dragState(false);
+        }
+        isUpward = false;
     }
 
     /**
@@ -895,6 +764,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
             String fileName = DateUtils.getCreateFileName("CROP_") + ".jpg";
             Uri destinationUri = Uri.fromFile(new File(getSandboxPath(), fileName));
             UCrop.Options options = buildOptions();
+            options.setStartPhotoIndex(currentLocalMedia.getNum());
             ArrayList<String> dataCropSource = new ArrayList<>();
             for (int i = 0; i < dataSource.size(); i++) {
                 LocalMedia media = dataSource.get(i);
@@ -909,7 +779,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                     if (!ImageLoaderUtils.assertValidRequest(context)) {
                         return;
                     }
-                    Glide.with(context).load(url).override(180, 180).into(imageView);
+                    Glide.with(context).load(url).into(imageView);
                 }
 
                 @Override
@@ -968,42 +838,39 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
      * @return
      */
     private UCrop.Options buildOptions() {
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add("1920-1080");
+        strings.add("120-1080");
+        strings.add("190-1080");
+        strings.add("920-1080");
+        strings.add("300-300");
+        ArrayList<String> photoUrl = new ArrayList<>();
+        photoUrl.add("https://s.hunlihu.com/share/78085545a8654e74b7d7714f24f723bf.jpg");
+        photoUrl.add("https://s.hunlihu.com/share/34ab8f922157415f9bdfa6b2e1dfc413.jpg");
+        photoUrl.add("https://s.hunlihu.com/share/89b206b291784d94ac4f5c4ef3f25b7d.jpg");
+        photoUrl.add("https://s.hunlihu.com/share/78085545a8654e74b7d7714f24f723bf.jpg");
+        photoUrl.add("https://s.hunlihu.com/share/78085545a8654e74b7d7714f24f723bf.jpg");
+        photoUrl.add("https://s.hunlihu.com/share/78085545a8654e74b7d7714f24f723bf.jpg");
         UCrop.Options options = new UCrop.Options();
         options.setHideBottomControls(!cb_hide.isChecked());
+
         options.setFreeStyleCropEnabled(cb_styleCrop.isChecked());
         options.setShowCropFrame(cb_showCropFrame.isChecked());
         options.setShowCropGrid(cb_showCropGrid.isChecked());
+        options.setSizeArrays(strings);
+        options.setExtraShowPreviewView(true);
+        options.setPreviewPhotoList(photoUrl);
         options.setCircleDimmedLayer(cb_crop_circular.isChecked());
-        options.withAspectRatio(aspect_ratio_x, aspect_ratio_y);
+        options.withAspectRatio(600, 800);
+        options.withMaxResultSize(600,800);
+        options.setShowSetImageType(true);
         options.setCropOutputPathDir(getSandboxPath());
         options.isCropDragSmoothToCenter(false);
         options.isUseCustomLoaderBitmap(cb_crop_use_bitmap.isChecked());
-        options.setSkipCropMimeType(getNotSupportCrop());
-        options.isForbidCropGifWebp(cb_not_gif.isChecked());
         options.isForbidSkipMultipleCrop(false);
-        if (selectorStyle != null && selectorStyle.getSelectMainStyle().getStatusBarColor() != 0) {
-            SelectMainStyle mainStyle = selectorStyle.getSelectMainStyle();
-            boolean isDarkStatusBarBlack = mainStyle.isDarkStatusBarBlack();
-            int statusBarColor = mainStyle.getStatusBarColor();
-            options.isDarkStatusBarBlack(isDarkStatusBarBlack);
-            if (StyleUtils.checkStyleValidity(statusBarColor)) {
-                options.setStatusBarColor(statusBarColor);
-                options.setToolbarColor(statusBarColor);
-            } else {
-                options.setStatusBarColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
-                options.setToolbarColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
-            }
-            TitleBarStyle titleBarStyle = selectorStyle.getTitleBarStyle();
-            if (StyleUtils.checkStyleValidity(titleBarStyle.getTitleTextColor())) {
-                options.setToolbarWidgetColor(titleBarStyle.getTitleTextColor());
-            } else {
-                options.setToolbarWidgetColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
-            }
-        } else {
-            options.setStatusBarColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
-            options.setToolbarColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
-            options.setToolbarWidgetColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
-        }
+        options.setStatusBarColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
+        options.setToolbarColor(ContextCompat.getColor(getContext(), R.color.ps_color_grey));
+        options.setToolbarWidgetColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
         return options;
     }
 
@@ -1279,13 +1146,12 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                 break;
             case R.id.rb_white_style:
                 TitleBarStyle whiteTitleBarStyle = new TitleBarStyle();
-                whiteTitleBarStyle.setTitleBackgroundColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
+                whiteTitleBarStyle.setTitleBackgroundColor(ContextCompat.getColor(getContext(), R.color.app_color_green));
                 whiteTitleBarStyle.setTitleDrawableRightResource(R.drawable.ic_orange_arrow_down);
                 whiteTitleBarStyle.setTitleLeftBackResource(R.drawable.ps_ic_black_back);
                 whiteTitleBarStyle.setTitleTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_black));
                 whiteTitleBarStyle.setTitleCancelTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_53575e));
-                whiteTitleBarStyle.setDisplayTitleBarLine(true);
-
+                whiteTitleBarStyle.setHideLeftImage(true);
                 BottomNavBarStyle whiteBottomNavBarStyle = new BottomNavBarStyle();
                 whiteBottomNavBarStyle.setBottomNarBarBackgroundColor(Color.parseColor("#EEEEEE"));
                 whiteBottomNavBarStyle.setBottomPreviewSelectTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_53575e));
@@ -1297,12 +1163,10 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                 whiteBottomNavBarStyle.setBottomOriginalTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_53575e));
 
                 SelectMainStyle selectMainStyle = new SelectMainStyle();
-                selectMainStyle.setStatusBarColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
+                selectMainStyle.setStatusBarColor(ContextCompat.getColor(getContext(), R.color.app_color_green));
                 selectMainStyle.setDarkStatusBarBlack(true);
                 selectMainStyle.setSelectNormalTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_9b));
                 selectMainStyle.setSelectTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_fa632d));
-                selectMainStyle.setPreviewSelectBackground(R.drawable.ps_demo_white_preview_selector);
-                selectMainStyle.setSelectBackground(R.drawable.ps_checkbox_selector);
                 selectMainStyle.setSelectText(getString(R.string.ps_done_front_num));
                 selectMainStyle.setMainListBackgroundColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
 
@@ -1318,7 +1182,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                 numberBlueBottomNavBarStyle.setBottomPreviewNormalTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_9b));
                 numberBlueBottomNavBarStyle.setBottomPreviewSelectTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_blue));
                 numberBlueBottomNavBarStyle.setBottomNarBarBackgroundColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
-                numberBlueBottomNavBarStyle.setBottomSelectNumResources(R.drawable.ps_demo_blue_num_selected);
+                numberBlueBottomNavBarStyle.setBottomSelectNumResources(R.drawable.picture_num_oval_blue);
                 numberBlueBottomNavBarStyle.setBottomEditorTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_53575e));
                 numberBlueBottomNavBarStyle.setBottomOriginalTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_53575e));
 
@@ -1327,9 +1191,8 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                 numberBlueSelectMainStyle.setStatusBarColor(ContextCompat.getColor(getContext(), R.color.ps_color_blue));
                 numberBlueSelectMainStyle.setSelectNumberStyle(true);
                 numberBlueSelectMainStyle.setPreviewSelectNumberStyle(true);
-                numberBlueSelectMainStyle.setSelectBackground(R.drawable.ps_demo_blue_num_selector);
+                numberBlueSelectMainStyle.setSelectBackground(R.drawable.picture_checkbox_num_selector);
                 numberBlueSelectMainStyle.setMainListBackgroundColor(ContextCompat.getColor(getContext(), R.color.ps_color_white));
-                numberBlueSelectMainStyle.setPreviewSelectBackground(R.drawable.ps_demo_preview_blue_num_selector);
 
                 numberBlueSelectMainStyle.setSelectNormalTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_9b));
                 numberBlueSelectMainStyle.setSelectTextColor(ContextCompat.getColor(getContext(), R.color.ps_color_blue));
@@ -1370,7 +1233,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                 numberTitleBarStyle.setAlbumTitleRelativeLeft(true);
                 numberTitleBarStyle.setTitleAlbumBackgroundResource(R.drawable.ps_album_bg);
                 numberTitleBarStyle.setTitleDrawableRightResource(R.drawable.ps_ic_grey_arrow);
-                numberTitleBarStyle.setPreviewTitleLeftBackResource(R.drawable.ps_ic_normal_back);
+                numberTitleBarStyle.setPreviewTitleLeftBackResource(R.drawable.ps_ic_back2);
 
                 // 底部NavBar 风格
                 BottomNavBarStyle numberBottomNavBarStyle = new BottomNavBarStyle();
@@ -1412,28 +1275,12 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
                 cb_styleCrop.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 cb_showCropFrame.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 cb_showCropGrid.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                cb_skip_not_gif.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                cb_not_gif.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 break;
             case R.id.cb_custom_sandbox:
                 cb_only_dir.setChecked(isChecked);
                 break;
             case R.id.cb_only_dir:
                 cb_custom_sandbox.setChecked(isChecked);
-                break;
-            case R.id.cb_skip_not_gif:
-                cb_not_gif.setChecked(false);
-                cb_skip_not_gif.setChecked(isChecked);
-                break;
-            case R.id.cb_not_gif:
-                cb_skip_not_gif.setChecked(false);
-                cb_not_gif.setChecked(isChecked);
-                break;
-            case R.id.cb_mode:
-                cb_attach_camera_mode.setVisibility(isChecked ? View.GONE : View.VISIBLE);
-                break;
-            case R.id.cb_system_album:
-                cb_attach_system_mode.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 break;
             case R.id.cb_crop_circular:
                 if (isChecked) {
@@ -1475,7 +1322,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (requestCode == PictureConfig.CHOOSE_REQUEST || requestCode == PictureConfig.REQUEST_CAMERA) {
+            if (requestCode == PictureConfig.CHOOSE_REQUEST) {
                 ArrayList<LocalMedia> result = PictureSelector.obtainSelectorList(data);
                 analyticalSelectResults(result);
             }
@@ -1541,13 +1388,11 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                boolean isMaxSize = result.size() == mAdapter.getSelectMax();
-                int oldSize = mAdapter.getData().size();
-                mAdapter.notifyItemRangeRemoved(0, isMaxSize ? oldSize + 1 : oldSize);
+                mAdapter.notifyItemRangeRemoved(0, mAdapter.getData().size());
                 mAdapter.getData().clear();
-
                 mAdapter.getData().addAll(result);
-                mAdapter.notifyItemRangeInserted(0, result.size());
+                boolean isMaxSize = result.size() == mAdapter.getSelectMax();
+                mAdapter.notifyItemRangeInserted(0, isMaxSize ? result.size() - 1 : result.size());
             }
         });
     }

@@ -42,6 +42,23 @@
         android:layout_below="@id/view_title"
         android:clipChildren="false">
 
+        <TextView
+            android:id="@+id/tv_delete_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@color/app_color_red"
+            android:drawableTop="@drawable/ps_ic_delete"
+            android:drawablePadding="5dp"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:text="@string/app_drag_delete"
+            android:textColor="@color/app_color_white"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -155,9 +172,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="8dp"
-                    android:text="* 开启原图功能，用户就可以自由选择原图"
+                    android:text="* 开启原图功能，用户就可以自由选择原图；但会跳过裁剪功能哦"
                     android:textColor="@android:color/holo_red_dark"
-                    android:textSize="12dp"
+                    android:textSize="10dp"
                     android:visibility="gone" />
 
                 <CheckBox
@@ -371,25 +388,6 @@
                 </RadioGroup>
 
                 <CheckBox
-                    android:id="@+id/cb_system_album"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:text="使用系统图库 (仅支持部分api)"
-                    android:textColor="@color/app_color_53575e"
-                    android:textSize="14sp" />
-
-                <CheckBox
-                    android:id="@+id/cb_attach_system_mode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:visibility="gone"
-                    android:text="使用Activity承载系统相册"
-                    android:textColor="@color/app_color_53575e"
-                    android:textSize="14sp" />
-
-                <CheckBox
                     android:id="@+id/cbWithImageVideo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -458,16 +456,6 @@
                     android:textColor="@color/app_color_53575e"
                     android:textSize="14sp" />
 
-                <CheckBox
-                    android:id="@+id/cb_attach_camera_mode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:text="使用Activity承载Camera相机"
-                    android:textColor="@color/app_color_53575e"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -493,16 +481,6 @@
                         android:textSize="14sp"
                         android:visibility="gone" />
                 </LinearLayout>
-
-                <CheckBox
-                    android:id="@+id/cb_fast_select"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:gravity="center_vertical"
-                    android:text="滑动选择"
-                    android:textColor="@color/app_color_53575e"
-                    android:textSize="14sp" />
 
                 <CheckBox
                     android:id="@+id/cb_isCamera"
@@ -652,11 +630,11 @@
                     android:id="@+id/cb_crop_use_bitmap"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="true"
                     android:gravity="center_vertical"
                     android:text="自定义Loader Bitmap"
                     android:textColor="@color/app_color_53575e"
                     android:textSize="14sp"
+                    android:checked="true"
                     android:visibility="gone" />
 
                 <CheckBox
@@ -711,45 +689,8 @@
                     android:textColor="@color/app_color_53575e"
                     android:textSize="14sp"
                     android:visibility="gone" />
-
-                <CheckBox
-                    android:id="@+id/cb_skip_not_gif"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:text="跳过裁剪gif"
-                    android:textColor="@color/app_color_53575e"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
-
-                <CheckBox
-                    android:id="@+id/cb_not_gif"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:text="禁止裁剪gif"
-                    android:textColor="@color/app_color_53575e"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
             </LinearLayout>
         </ScrollView>
-
-        <TextView
-            android:id="@+id/tv_delete_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:alpha="0"
-            android:background="@color/app_color_cc_red"
-            android:drawableTop="@drawable/ic_normal_delete"
-            android:drawablePadding="5dp"
-            android:gravity="center"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:text="@string/app_drag_delete"
-            android:textColor="@color/app_color_white"
-            android:textSize="12sp"
-            tools:alpha="1" />
 
         <View
             android:layout_width="match_parent"

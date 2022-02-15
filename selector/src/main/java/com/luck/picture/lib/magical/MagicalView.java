@@ -17,8 +17,10 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.luck.picture.lib.R;
 import com.luck.picture.lib.config.PictureSelectionConfig;
 import com.luck.picture.lib.utils.DensityUtil;
 
@@ -35,7 +37,6 @@ public class MagicalView extends FrameLayout {
     private int mOriginTop;
     private int mOriginHeight;
     private int mOriginWidth;
-
     private int screenWidth;
     private int screenHeight;
     private final int appInScreenHeight;
@@ -69,6 +70,7 @@ public class MagicalView extends FrameLayout {
         getScreenSize();
         backgroundView = new View(context);
         backgroundView.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        backgroundView.setBackgroundColor(ContextCompat.getColor(context, R.color.ps_color_black));
         backgroundView.setAlpha(mAlpha);
         addView(backgroundView);
 
@@ -77,15 +79,6 @@ public class MagicalView extends FrameLayout {
         addView(contentLayout);
 
         magicalWrapper = new MagicalViewWrapper(contentLayout);
-    }
-
-    /**
-     * setBackgroundColor
-     *
-     * @param color
-     */
-    public void setBackgroundColor(int color) {
-        backgroundView.setBackgroundColor(color);
     }
 
     public void startNormal(int realWidth, int realHeight, boolean showImmediately) {

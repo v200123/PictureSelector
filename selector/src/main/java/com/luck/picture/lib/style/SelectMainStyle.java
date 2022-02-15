@@ -32,6 +32,10 @@ public class SelectMainStyle implements Parcelable {
     private boolean isCompleteSelectRelativeTop;
 
     /**
+     * 是否要启用沉浸式的状态栏
+     */
+    private boolean isImmersive = true;
+    /**
      * 预览页选择按钮从顶部放在右下角
      */
     private boolean isPreviewSelectRelativeBottom;
@@ -48,11 +52,6 @@ public class SelectMainStyle implements Parcelable {
      * </p>
      */
     private int previewSelectMarginRight;
-
-    /**
-     * 预览背景色
-     */
-    private int previewBackgroundColor;
 
     /**
      * 预览页选择按钮文本
@@ -267,16 +266,15 @@ public class SelectMainStyle implements Parcelable {
 
     }
 
-
     protected SelectMainStyle(Parcel in) {
         statusBarColor = in.readInt();
         navigationBarColor = in.readInt();
         isDarkStatusBarBlack = in.readByte() != 0;
         isCompleteSelectRelativeTop = in.readByte() != 0;
+        isImmersive = in.readByte() != 0;
         isPreviewSelectRelativeBottom = in.readByte() != 0;
         isPreviewDisplaySelectGallery = in.readByte() != 0;
         previewSelectMarginRight = in.readInt();
-        previewBackgroundColor = in.readInt();
         previewSelectText = in.readString();
         previewSelectTextSize = in.readInt();
         previewSelectTextColor = in.readInt();
@@ -329,7 +327,6 @@ public class SelectMainStyle implements Parcelable {
         dest.writeByte((byte) (isPreviewSelectRelativeBottom ? 1 : 0));
         dest.writeByte((byte) (isPreviewDisplaySelectGallery ? 1 : 0));
         dest.writeInt(previewSelectMarginRight);
-        dest.writeInt(previewBackgroundColor);
         dest.writeString(previewSelectText);
         dest.writeInt(previewSelectTextSize);
         dest.writeInt(previewSelectTextColor);
@@ -371,6 +368,8 @@ public class SelectMainStyle implements Parcelable {
         dest.writeInt(adapterPreviewGalleryFrameResource);
         dest.writeInt(adapterPreviewGalleryBackgroundResource);
         dest.writeInt(adapterPreviewGalleryItemSize);
+        dest.writeByte((byte) (isImmersive ? 1 : 0));
+
     }
 
     @Override
@@ -774,11 +773,11 @@ public class SelectMainStyle implements Parcelable {
         this.adapterPreviewGalleryItemSize = adapterPreviewGalleryItemSize;
     }
 
-    public int getPreviewBackgroundColor() {
-        return previewBackgroundColor;
+    public boolean isImmersive() {
+        return isImmersive;
     }
 
-    public void setPreviewBackgroundColor(int previewBackgroundColor) {
-        this.previewBackgroundColor = previewBackgroundColor;
+    public void setImmersive(boolean immersive) {
+        isImmersive = immersive;
     }
 }

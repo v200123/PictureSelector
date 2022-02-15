@@ -33,21 +33,30 @@
         android:layout_below="@+id/toolbar"
         android:layout_marginBottom="-12dp">
 
-        <ImageView
-            android:id="@+id/image_view_logo"
-            android:layout_width="@dimen/ucrop_default_crop_logo_size"
-            android:layout_height="@dimen/ucrop_default_crop_logo_size"
-            android:layout_gravity="center"
-            app:srcCompat="@drawable/ucrop_vector_ic_crop"
-            tools:background="@drawable/ucrop_vector_ic_crop"
-            tools:ignore="ContentDescription,MissingPrefix" />
-
         <com.yalantis.ucrop.view.UCropView
             android:id="@+id/ucrop"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:alpha="0" />
-
+        <ImageView
+            android:layout_margin="18dp"
+            android:id="@+id/image_view_logo"
+            android:layout_width="99dp"
+            android:layout_height="60dp"
+            android:layout_gravity="end"
+            tools:background="@drawable/ucrop_vector_ic_crop"
+            tools:ignore="ContentDescription,MissingPrefix" />
+        <TextView
+            android:id="@+id/image_view_muban"
+            android:gravity="center"
+            android:text="模板图"
+            android:textColor="@color/ucrop_color_white"
+            android:background="#90858585"
+            android:layout_gravity="end"
+            android:layout_marginTop="60dp"
+            android:layout_marginEnd="18dp"
+            android:layout_width="99dp"
+            android:layout_height="wrap_content"/>
     </FrameLayout>
 
     <FrameLayout

@@ -14,9 +14,14 @@ public class TitleBarStyle implements Parcelable {
      */
     private boolean isHideTitleBar;
     /**
+     * 是否隐藏左边的箭头变为文字
+     */
+    private boolean isHideLeftImage;
+    /**
      * 标题栏左边关闭样式
      */
     private int titleLeftBackResource;
+
 
     /**
      * 预览标题栏左边关闭样式
@@ -40,6 +45,7 @@ public class TitleBarStyle implements Parcelable {
      */
     private int titleBackgroundColor;
 
+    private int titleBackgroundDrawable;
     /**
      * 预览标题栏背景
      */
@@ -97,28 +103,20 @@ public class TitleBarStyle implements Parcelable {
      */
     private int titleCancelTextColor;
 
-    /**
-     * 标题栏底部线条色值
-     */
-    private int titleBarLineColor;
-
-    /**
-     * 是否显示标题栏底部线条
-     */
-    private boolean isDisplayTitleBarLine;
 
     public TitleBarStyle() {
     }
 
-
     protected TitleBarStyle(Parcel in) {
         isHideTitleBar = in.readByte() != 0;
+        isHideLeftImage = in.readByte() != 0;
         titleLeftBackResource = in.readInt();
         previewTitleLeftBackResource = in.readInt();
         titleDefaultText = in.readString();
         titleTextSize = in.readInt();
         titleTextColor = in.readInt();
         titleBackgroundColor = in.readInt();
+        titleBackgroundDrawable = in.readInt();
         previewTitleBackgroundColor = in.readInt();
         titleBarHeight = in.readInt();
         titleAlbumBackgroundResource = in.readInt();
@@ -130,19 +128,19 @@ public class TitleBarStyle implements Parcelable {
         titleCancelText = in.readString();
         titleCancelTextSize = in.readInt();
         titleCancelTextColor = in.readInt();
-        titleBarLineColor = in.readInt();
-        isDisplayTitleBarLine = in.readByte() != 0;
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeByte((byte) (isHideTitleBar ? 1 : 0));
+        dest.writeByte((byte) (isHideLeftImage ? 1 : 0));
         dest.writeInt(titleLeftBackResource);
         dest.writeInt(previewTitleLeftBackResource);
         dest.writeString(titleDefaultText);
         dest.writeInt(titleTextSize);
         dest.writeInt(titleTextColor);
         dest.writeInt(titleBackgroundColor);
+        dest.writeInt(titleBackgroundDrawable);
         dest.writeInt(previewTitleBackgroundColor);
         dest.writeInt(titleBarHeight);
         dest.writeInt(titleAlbumBackgroundResource);
@@ -154,8 +152,6 @@ public class TitleBarStyle implements Parcelable {
         dest.writeString(titleCancelText);
         dest.writeInt(titleCancelTextSize);
         dest.writeInt(titleCancelTextColor);
-        dest.writeInt(titleBarLineColor);
-        dest.writeByte((byte) (isDisplayTitleBarLine ? 1 : 0));
     }
 
     @Override
@@ -319,19 +315,19 @@ public class TitleBarStyle implements Parcelable {
         this.titleCancelTextColor = titleCancelTextColor;
     }
 
-    public int getTitleBarLineColor() {
-        return titleBarLineColor;
+    public int getTitleBackgroundDrawable() {
+        return titleBackgroundDrawable;
     }
 
-    public void setTitleBarLineColor(int titleBarLineColor) {
-        this.titleBarLineColor = titleBarLineColor;
+    public void setTitleBackgroundDrawable(int titleBackgroundDrawable) {
+        this.titleBackgroundDrawable = titleBackgroundDrawable;
     }
 
-    public boolean isDisplayTitleBarLine() {
-        return isDisplayTitleBarLine;
+    public boolean isHideLeftImage() {
+        return isHideLeftImage;
     }
 
-    public void setDisplayTitleBarLine(boolean displayTitleBarLine) {
-        isDisplayTitleBarLine = displayTitleBarLine;
+    public void setHideLeftImage(boolean hideLeftImage) {
+        isHideLeftImage = hideLeftImage;
     }
 }

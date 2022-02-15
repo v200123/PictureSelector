@@ -66,4 +66,5 @@ public interface ImageEngine {
      * @param context
      */
     void resumeRequests(Context context);
+
 }

@@ -1,17 +1,15 @@
 package com.luck.picture.lib.utils;
 
-import static java.lang.Math.abs;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 
-import com.google.android.exoplayer2.C;
 import com.luck.picture.lib.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author：luck
@@ -21,12 +19,9 @@ import java.util.Locale;
 
 public class DateUtils {
     @SuppressLint("SimpleDateFormat")
-    private static final SimpleDateFormat SF = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+    private static final SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     @SuppressLint("SimpleDateFormat")
-    private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM");
-
-    @SuppressLint("SimpleDateFormat")
-    private static final SimpleDateFormat SDF_YEAR = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
 
     public static long getCurrentTimeMillis() {
         String timeToString = ValueOf.toString(System.currentTimeMillis());
@@ -34,20 +29,15 @@ public class DateUtils {
     }
 
 
-    public static String getDataFormat(Context context, long time) {
+    public static String getDataFormat(Context context,long time) {
         time = String.valueOf(time).length() > 10 ? time : time * 1000;
         if (isThisWeek(time)) {
             return context.getString(R.string.ps_current_week);
         } else if (isThisMonth(time)) {
             return context.getString(R.string.ps_current_month);
         } else {
-            return SDF.format(time);
+            return sdf.format(time);
         }
-    }
-
-    public static String getYearDataFormat(long time) {
-        time = String.valueOf(time).length() > 10 ? time : time * 1000;
-        return SDF_YEAR.format(time);
     }
 
     private static boolean isThisWeek(long time) {
@@ -60,23 +50,11 @@ public class DateUtils {
 
     public static boolean isThisMonth(long time) {
         Date date = new Date(time);
-        String param = SDF.format(date);
-        String now = SDF.format(new Date());
+        String param = sdf.format(date);
+        String now = sdf.format(new Date());
         return param.equals(now);
     }
 
-
-    /**
-     * millisecondToSecond
-     *
-     * @param duration millisecond
-     * @return
-     */
-    public static long millisecondToSecond(long duration) {
-        duration = abs(duration);
-        long totalSeconds = (duration + 500) / 1000;
-        return totalSeconds * 1000;
-    }
 
     /**
      * 判断两个时间戳相差多少秒
@@ -98,22 +76,14 @@ public class DateUtils {
     /**
      * 时间戳转换成时间格式
      *
-     * @param timeMs
+     * @param duration
      * @return
      */
-    public static String formatDurationTime(long timeMs) {
-        if (timeMs == C.TIME_UNSET) {
-            timeMs = 0;
-        }
-        String prefix = timeMs < 0 ? "-" : "";
-        timeMs = abs(timeMs);
-        long totalSeconds = (timeMs + 500) / 1000;
-        long seconds = totalSeconds % 60;
-        long minutes = (totalSeconds / 60) % 60;
-        long hours = totalSeconds / 3600;
-        return hours > 0
-                ? String.format(Locale.getDefault(), "%s%d:%02d:%02d", prefix, hours, minutes, seconds)
-                : String.format(Locale.getDefault(), "%s%02d:%02d", prefix, minutes, seconds);
+    public static String formatDurationTime(long duration) {
+        return String.format(Locale.getDefault(), "%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(duration),
+                TimeUnit.MILLISECONDS.toSeconds(duration)
+                        - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(duration)));
     }
 
 
@@ -125,7 +95,7 @@ public class DateUtils {
      */
     public static String getCreateFileName(String prefix) {
         long millis = System.currentTimeMillis();
-        return prefix + SF.format(millis);
+        return prefix + sf.format(millis);
     }
 
     /**
@@ -135,7 +105,7 @@ public class DateUtils {
      */
     public static String getCreateFileName() {
         long millis = System.currentTimeMillis();
-        return SF.format(millis);
+        return sf.format(millis);
     }
 
     /**

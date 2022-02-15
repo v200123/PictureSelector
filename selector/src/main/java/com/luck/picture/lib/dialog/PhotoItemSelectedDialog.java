@@ -1,7 +1,6 @@
 package com.luck.picture.lib.dialog;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -29,7 +28,6 @@ import com.luck.picture.lib.utils.DensityUtil;
 public class PhotoItemSelectedDialog extends DialogFragment implements View.OnClickListener {
     public static final int IMAGE_CAMERA = 0;
     public static final int VIDEO_CAMERA = 1;
-    private boolean isCancel = true;
 
     public static PhotoItemSelectedDialog newInstance() {
         return new PhotoItemSelectedDialog();
@@ -86,28 +84,18 @@ public class PhotoItemSelectedDialog extends DialogFragment implements View.OnCl
         this.onItemClickListener = onItemClickListener;
     }
 
-    private OnDismissListener onDismissListener;
-
-    public void setOnDismissListener(OnDismissListener listener) {
-        this.onDismissListener = listener;
-    }
-
-    public interface OnDismissListener {
-        void onDismiss(boolean isCancel, DialogInterface dialog);
-    }
-
     @Override
     public void onClick(View v) {
         int id = v.getId();
         if (onItemClickListener != null) {
             if (id == R.id.ps_tv_photo) {
                 onItemClickListener.onItemClick(v, IMAGE_CAMERA);
-                isCancel = false;
-            } else if (id == R.id.ps_tv_video) {
+            }
+            if (id == R.id.ps_tv_video) {
                 onItemClickListener.onItemClick(v, VIDEO_CAMERA);
-                isCancel = false;
             }
         }
+
         dismissAllowingStateLoss();
     }
 
@@ -116,13 +104,5 @@ public class PhotoItemSelectedDialog extends DialogFragment implements View.OnCl
         FragmentTransaction ft = manager.beginTransaction();
         ft.add(this, tag);
         ft.commitAllowingStateLoss();
-    }
-
-    @Override
-    public void onDismiss(@NonNull DialogInterface dialog) {
-        super.onDismiss(dialog);
-        if (onDismissListener != null) {
-            onDismissListener.onDismiss(isCancel, dialog);
-        }
     }
 }

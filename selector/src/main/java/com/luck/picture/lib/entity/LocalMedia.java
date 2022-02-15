@@ -175,7 +175,9 @@ public class LocalMedia implements Parcelable {
      * Whether the image has been edited
      * # For internal use only
      */
-    private boolean isEditorImage;
+    private boolean isEditorImage =true;
+
+    private boolean isNeedShow;
 
     public LocalMedia() {
 
@@ -215,6 +217,7 @@ public class LocalMedia implements Parcelable {
         isMaxSelectEnabledMask = in.readByte() != 0;
         isGalleryEnabledMask = in.readByte() != 0;
         isEditorImage = in.readByte() != 0;
+        isNeedShow = in.readByte() != 0;
     }
 
     @Override
@@ -251,6 +254,7 @@ public class LocalMedia implements Parcelable {
         dest.writeByte((byte) (isMaxSelectEnabledMask ? 1 : 0));
         dest.writeByte((byte) (isGalleryEnabledMask ? 1 : 0));
         dest.writeByte((byte) (isEditorImage ? 1 : 0));
+        dest.writeByte((byte) (isNeedShow ? 1 : 0));
     }
 
     @Override
@@ -629,5 +633,13 @@ public class LocalMedia implements Parcelable {
 
     public void setGalleryEnabledMask(boolean galleryEnabledMask) {
         isGalleryEnabledMask = galleryEnabledMask;
+    }
+
+    public boolean isNeedShow() {
+        return isNeedShow;
+    }
+
+    public void setNeedShow(boolean needShow) {
+        isNeedShow = needShow;
     }
 }

@@ -6,15 +6,34 @@
     <!-- Padding for both views can be different -->
 
     <com.yalantis.ucrop.view.GestureCropImageView
+        android:layout_gravity="center"
         android:id="@+id/image_view_crop"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="@dimen/ucrop_padding_crop_frame"/>
-
     <com.yalantis.ucrop.view.OverlayView
         android:id="@+id/view_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="@dimen/ucrop_padding_crop_frame"/>
+    <FrameLayout
+        android:id="@+id/fl_image_view_crop"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
+        <ImageView
+            android:scaleType="fitXY"
+            android:layout_gravity="center"
+            android:id="@+id/iv_vague_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:scaleType="fitCenter"
+            android:layout_gravity="center"
+            android:id="@+id/top_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </FrameLayout>
 </merge>

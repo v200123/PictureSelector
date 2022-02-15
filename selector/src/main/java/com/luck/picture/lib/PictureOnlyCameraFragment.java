@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.luck.picture.lib.basic.PictureCommonFragment;
+import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureSelectionConfig;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.manager.SelectedManager;
@@ -64,19 +65,18 @@ public class PictureOnlyCameraFragment extends PictureCommonFragment {
 
     @Override
     public void dispatchCameraMediaResult(LocalMedia media) {
-        int selectResultCode = confirmSelect(media, false);
-        if (selectResultCode == SelectedManager.ADD_SUCCESS) {
-            dispatchTransformResult();
-        } else {
-            onKeyBackFragmentFinish();
-        }
+        SelectedManager.getSelectedResult().add(media);
+        dispatchTransformResult();
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_CANCELED) {
-            onKeyBackFragmentFinish();
+            if (requestCode == PictureConfig.REQUEST_CAMERA) {
+                onBackOffFragment();
+                onSelectFinish(Activity.RESULT_CANCELED, null);
+            }
         }
     }
 
@@ -101,7 +101,7 @@ public class PictureOnlyCameraFragment extends PictureCommonFragment {
             } else if (!PermissionChecker.isCheckWriteStorage(getContext())) {
                 ToastUtils.showToast(getContext(), getString(R.string.ps_jurisdiction));
             }
-            onKeyBackFragmentFinish();
+            onBackOffFragment();
         }
     }
 }

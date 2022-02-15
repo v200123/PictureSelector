@@ -7,7 +7,13 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
@@ -15,6 +21,7 @@ import androidx.annotation.Nullable;
 
 import com.yalantis.ucrop.R;
 import com.yalantis.ucrop.callback.BitmapCropCallback;
+import com.yalantis.ucrop.callback.ChangeImageViewTypeListener;
 import com.yalantis.ucrop.callback.CropBoundsChangeListener;
 import com.yalantis.ucrop.model.CropParameters;
 import com.yalantis.ucrop.model.ImageState;
@@ -38,19 +45,20 @@ public class CropImageView extends TransformImageView {
     public static final float DEFAULT_MAX_SCALE_MULTIPLIER = 10.0f;
     public static final float SOURCE_IMAGE_ASPECT_RATIO = 0f;
     public static final float DEFAULT_ASPECT_RATIO = SOURCE_IMAGE_ASPECT_RATIO;
-
+    public Boolean outputImage = false;//是不是直接从图片容器中读取文件
     private final RectF mCropRect = new RectF();
-
+    private Bitmap mOriginBitmap = null;
     private final Matrix mTempMatrix = new Matrix();
 
     private float mTargetAspectRatio;
     private float mMaxScaleMultiplier = DEFAULT_MAX_SCALE_MULTIPLIER;
 
     private CropBoundsChangeListener mCropBoundsChangeListener;
+    private ChangeImageViewTypeListener mChangeImageViewTypeListener;
 
     private Runnable mWrapCropBoundsRunnable, mZoomImageToPositionRunnable = null;
 
-    private float mMaxScale, mMinScale;
+    private float mMaxScale, mMinScale,mCenterScale;
     private int mMaxResultImageSizeX = 0, mMaxResultImageSizeY = 0;
     private long mImageToWrapCropBoundsAnimDuration = DEFAULT_IMAGE_TO_CROP_BOUNDS_ANIM_DURATION;
 
@@ -64,6 +72,7 @@ public class CropImageView extends TransformImageView {
 
     public CropImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
     }
 
     /**
@@ -124,6 +133,8 @@ public class CropImageView extends TransformImageView {
                 cropRect.right - getPaddingRight(), cropRect.bottom - getPaddingBottom());
         calculateImageScaleBounds();
         setImageToWrapCropBounds();
+        if(mOriginBitmap == null)
+            mOriginBitmap = this.getViewBitmap().copy(this.getViewBitmap().getConfig(),false);
     }
 
     /**
@@ -156,8 +167,14 @@ public class CropImageView extends TransformImageView {
         return mCropBoundsChangeListener;
     }
 
+
+
     public void setCropBoundsChangeListener(@Nullable CropBoundsChangeListener cropBoundsChangeListener) {
         mCropBoundsChangeListener = cropBoundsChangeListener;
+    }
+
+    public void setChangeImageViewTypeListener(@Nullable ChangeImageViewTypeListener cropBoundsChangeListener) {
+        mChangeImageViewTypeListener = cropBoundsChangeListener;
     }
 
     /**
@@ -255,6 +272,23 @@ public class CropImageView extends TransformImageView {
      */
     public void postRotate(float deltaAngle) {
         postRotate(deltaAngle, mCropRect.centerX(), mCropRect.centerY());
+    }
+
+    public Boolean postImageType() {
+        if (outputImage) {
+            this.setVisibility(View.VISIBLE);
+            outputImage = false;
+            this.setScaleType(ScaleType.MATRIX);
+            this.setImageMatrix(mCurrentImageMatrix);
+            this.getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
+            this.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
+            this.setImageBitmap(mOriginBitmap);
+        } else {
+            outputImage = true;
+            this.setVisibility(View.GONE);
+        }
+        mChangeImageViewTypeListener.onChangeImageViewType(outputImage);
+        return outputImage;
     }
 
     /**
@@ -469,7 +503,6 @@ public class CropImageView extends TransformImageView {
     private void calculateImageScaleBounds(float drawableWidth, float drawableHeight) {
         float widthScale = Math.min(mCropRect.width() / drawableWidth, mCropRect.width() / drawableHeight);
         float heightScale = Math.min(mCropRect.height() / drawableHeight, mCropRect.height() / drawableWidth);
-
         mMinScale = Math.min(widthScale, heightScale);
         mMaxScale = mMinScale * mMaxScaleMultiplier;
     }

@@ -39,6 +39,9 @@ public class UCrop {
 
     public static final String EXTRA_INPUT_URI = EXTRA_PREFIX + ".InputUri";
     public static final String EXTRA_OUTPUT_URI = EXTRA_PREFIX + ".OutputUri";
+    public static final String EXTRA_SINGLE_PHOTO_URL = EXTRA_PREFIX + ".SinglePhotoUrl";
+    public static final String EXTRA_CROP_INDEX = EXTRA_PREFIX + ".UcropIndex";//设置模板图的底部index
+
     public static final String EXTRA_OUTPUT_CROP_ASPECT_RATIO = EXTRA_PREFIX + ".CropAspectRatio";
     public static final String EXTRA_OUTPUT_IMAGE_WIDTH = EXTRA_PREFIX + ".ImageWidth";
     public static final String EXTRA_OUTPUT_IMAGE_HEIGHT = EXTRA_PREFIX + ".ImageHeight";
@@ -337,9 +340,6 @@ public class UCrop {
 
         public static final String EXTRA_CROP_FORBID_SKIP = EXTRA_PREFIX + ".ForbidSkipCrop";
 
-        public static final String EXTRA_DARK_STATUS_BAR_BLACK = EXTRA_PREFIX + ".isDarkStatusBarBlack";
-
-
         public static final String EXTRA_CROP_CUSTOM_LOADER_BITMAP = EXTRA_PREFIX + ".CustomLoaderCropBitmap";
 
         public static final String EXTRA_CROP_DRAG_CENTER = EXTRA_PREFIX + ".DragSmoothToCenter";
@@ -380,11 +380,16 @@ public class UCrop {
         public static final String EXTRA_UCROP_LOGO_COLOR = EXTRA_PREFIX + ".UcropLogoColor";
 
         public static final String EXTRA_HIDE_BOTTOM_CONTROLS = EXTRA_PREFIX + ".HideBottomControls";
+        public static final String EXTRA_SHOW_PREVIEW_VIEW = EXTRA_PREFIX + ".ShowPreview";
+
+        public static final String EXTRA_SHOW_PREVIEW_LIST = EXTRA_PREFIX + ".ShowPreviewList";
+
+        public static final String EXTRA_GET_MULTIPLICATION_LIST = EXTRA_PREFIX + ".MultiplicationList";
+        public static final String EXTRA_SHOW_TAILOR = EXTRA_PREFIX + ".ShowTailor";
         public static final String EXTRA_FREE_STYLE_CROP = EXTRA_PREFIX + ".FreeStyleCrop";
 
         public static final String EXTRA_ASPECT_RATIO_SELECTED_BY_DEFAULT = EXTRA_PREFIX + ".AspectRatioSelectedByDefault";
         public static final String EXTRA_ASPECT_RATIO_OPTIONS = EXTRA_PREFIX + ".AspectRatioOptions";
-        public static final String EXTRA_SKIP_CROP_MIME_TYPE = EXTRA_PREFIX + ".SkipCropMimeType";
 
         public static final String EXTRA_MULTIPLE_ASPECT_RATIO = EXTRA_PREFIX + ".MultipleAspectRatio";
 
@@ -609,15 +614,6 @@ public class UCrop {
             mOptionBundle.putInt(EXTRA_STATUS_BAR_COLOR, color);
         }
 
-
-        /**
-         * @param Is the font of the status bar black
-         */
-        public void isDarkStatusBarBlack(boolean isDarkStatusBarBlack) {
-            mOptionBundle.putBoolean(EXTRA_DARK_STATUS_BAR_BLACK, isDarkStatusBarBlack);
-        }
-
-
         /**
          * @param color - desired resolved color of the active and selected widget and progress wheel middle line (default is white)
          */
@@ -676,11 +672,24 @@ public class UCrop {
             mOptionBundle.putBoolean(EXTRA_HIDE_BOTTOM_CONTROLS, hide);
         }
 
+        public void setShowSetImageType(boolean hide)
+        {
+            mOptionBundle.putBoolean(EXTRA_SHOW_TAILOR, hide);
+        }
+
+        public void setSizeArrays(ArrayList<String> sizeList){
+            mOptionBundle.putStringArrayList(EXTRA_GET_MULTIPLICATION_LIST, sizeList);
+        }
+
         /**
          * @param enabled - set to true to let user resize crop bounds (disabled by default)
          */
         public void setFreeStyleCropEnabled(boolean enabled) {
             mOptionBundle.putBoolean(EXTRA_FREE_STYLE_CROP, enabled);
+        }
+
+        public void  setStartPhotoIndex(int index){
+            mOptionBundle.putInt(EXTRA_CROP_INDEX,index);
         }
 
         /**
@@ -697,18 +706,6 @@ public class UCrop {
             }
             mOptionBundle.putInt(EXTRA_ASPECT_RATIO_SELECTED_BY_DEFAULT, selectedByDefault);
             mOptionBundle.putParcelableArrayList(EXTRA_ASPECT_RATIO_OPTIONS, new ArrayList<Parcelable>(Arrays.asList(aspectRatio)));
-        }
-
-        /**
-         * Skip crop mimeType
-         *
-         * @param mimeTypes Use example {@link { image/gift or image/webp ... }}
-         * @return
-         */
-        public void setSkipCropMimeType(String... mimeTypes) {
-            if (mimeTypes != null && mimeTypes.length > 0) {
-                mOptionBundle.putStringArrayList(EXTRA_SKIP_CROP_MIME_TYPE, new ArrayList<>(Arrays.asList(mimeTypes)));
-            }
         }
 
         /**
@@ -745,6 +742,13 @@ public class UCrop {
         }
 
 
+        public void setExtraShowPreviewView(Boolean isShow){
+            mOptionBundle.putBoolean(EXTRA_SHOW_PREVIEW_VIEW,isShow);
+        }
+
+        public void setPreviewPhotoList(ArrayList<String> sizeList){
+            mOptionBundle.putStringArrayList(EXTRA_SHOW_PREVIEW_LIST,sizeList);
+        }
         /**
          * Set an aspect ratio for crop bounds that is evaluated from source image width and height.
          * User won't see the menu with other ratios options.

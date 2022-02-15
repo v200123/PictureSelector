@@ -30,8 +30,7 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
     protected ImageView ivArrow;
     protected ImageView ivDelete;
     protected MarqueeTextView tvTitle;
-    protected TextView tvCancel;
-    protected View titleBarLine;
+    protected TextView tvCancel,tvLeftBack;
     protected View viewAlbumClickArea;
     protected PictureSelectionConfig config;
     protected View viewTopStatusBar;
@@ -64,13 +63,14 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
         titleBarLayout = findViewById(R.id.rl_title_bar);
         ivLeftBack = findViewById(R.id.ps_iv_left_back);
         rlAlbumBg = findViewById(R.id.ps_rl_album_bg);
+        tvLeftBack = findViewById(R.id.ps_tv_left_back);
         ivDelete = findViewById(R.id.ps_iv_delete);
         viewAlbumClickArea = findViewById(R.id.ps_rl_album_click);
         tvTitle = findViewById(R.id.ps_tv_title);
         ivArrow = findViewById(R.id.ps_iv_arrow);
         tvCancel = findViewById(R.id.ps_tv_cancel);
-        titleBarLine = findViewById(R.id.title_bar_line);
         ivLeftBack.setOnClickListener(this);
+        tvLeftBack.setOnClickListener(this);
         tvCancel.setOnClickListener(this);
         rlAlbumBg.setOnClickListener(this);
         titleBarLayout.setOnClickListener(this);
@@ -84,7 +84,7 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
         LayoutInflater.from(getContext()).inflate(R.layout.ps_title_bar, this);
     }
 
-    protected void handleLayoutUI() {
+    protected void handleLayoutUI(){
 
     }
 
@@ -92,17 +92,8 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
         return ivArrow;
     }
 
-    public ImageView getImageDelete() {
+    public ImageView getImageDelete(){
         return ivDelete;
-    }
-
-    /**
-     * title bar line
-     *
-     * @return
-     */
-    public View getTitleBarLine() {
-        return titleBarLine;
     }
 
     /**
@@ -128,24 +119,18 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
         }
         PictureSelectorStyle selectorStyle = PictureSelectionConfig.selectorStyle;
         TitleBarStyle titleBarStyle = selectorStyle.getTitleBarStyle();
+        if(titleBarStyle.isHideLeftImage())
+        {
+            tvLeftBack.setVisibility(View.VISIBLE);
+            ivLeftBack.setVisibility(View.INVISIBLE);
+        }
+
         int titleBarHeight = titleBarStyle.getTitleBarHeight();
         if (StyleUtils.checkSizeValidity(titleBarHeight)) {
             titleBarLayout.getLayoutParams().height = titleBarHeight;
         } else {
             titleBarLayout.getLayoutParams().height = DensityUtil.dip2px(getContext(), 48);
         }
-
-        if (titleBarLine != null) {
-            if (titleBarStyle.isDisplayTitleBarLine()) {
-                titleBarLine.setVisibility(VISIBLE);
-                if (StyleUtils.checkStyleValidity(titleBarStyle.getTitleBarLineColor())) {
-                    titleBarLine.setBackgroundColor(titleBarStyle.getTitleBarLineColor());
-                }
-            } else {
-                titleBarLine.setVisibility(GONE);
-            }
-        }
-
         int backgroundColor = titleBarStyle.getTitleBackgroundColor();
         if (StyleUtils.checkStyleValidity(backgroundColor)) {
             setBackgroundColor(backgroundColor);
@@ -167,7 +152,7 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
             tvTitle.setTextColor(titleTextColor);
         }
         if (config.isOnlySandboxDir) {
-            ivArrow.setImageResource(R.drawable.ps_ic_trans_1px);
+            ivArrow.setImageResource(R.drawable.ps_trans_1px);
         } else {
             int arrowResId = titleBarStyle.getTitleDrawableRightResource();
             if (StyleUtils.checkStyleValidity(arrowResId)) {
@@ -212,7 +197,7 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        if (id == R.id.ps_iv_left_back || id == R.id.ps_tv_cancel) {
+        if (id == R.id.ps_iv_left_back || id == R.id.ps_tv_left_back || id == R.id.ps_tv_cancel) {
             if (titleBarListener != null) {
                 titleBarListener.onBackPressed();
             }
@@ -220,7 +205,7 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
             if (titleBarListener != null) {
                 titleBarListener.onShowAlbumPopWindow(this);
             }
-        } else if (id == R.id.rl_title_bar) {
+        } else if (id == R.id.rl_title_bar){
             if (titleBarListener != null) {
                 titleBarListener.onTitleDoubleClick();
             }
@@ -242,7 +227,7 @@ public class TitleBar extends RelativeLayout implements View.OnClickListener {
         /**
          * 双击标题栏
          */
-        public void onTitleDoubleClick() {
+        public void onTitleDoubleClick(){
 
         }
 

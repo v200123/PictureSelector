@@ -15,6 +15,7 @@ import com.luck.picture.lib.interfaces.OnExternalPreviewEventListener;
 import com.luck.picture.lib.interfaces.OnInjectLayoutResourceListener;
 import com.luck.picture.lib.interfaces.OnMediaEditInterceptListener;
 import com.luck.picture.lib.interfaces.OnPermissionsInterceptListener;
+import com.luck.picture.lib.interfaces.OnPhotoSelectListener;
 import com.luck.picture.lib.interfaces.OnPreviewInterceptListener;
 import com.luck.picture.lib.interfaces.OnResultCallbackListener;
 import com.luck.picture.lib.interfaces.OnSelectLimitTipsListener;
@@ -73,11 +74,11 @@ public final class PictureSelectionConfig implements Parcelable {
     public boolean isPreviewFullScreenMode;
     public boolean isPreviewZoomEffect;
     public boolean isOpenClickSound;
+    public int photoStartNumber;
     public boolean isEmptyResultReturn;
     public boolean isHidePreviewDownload;
     public boolean isWithVideoImage;
     public List<String> queryOnlyList;
-    public List<String> skipCropList;
     public boolean isCheckOriginalImage;
     public String outPutCameraImageFileName;
     public String outPutCameraVideoFileName;
@@ -108,7 +109,6 @@ public final class PictureSelectionConfig implements Parcelable {
     public boolean isSandboxFileEngine;
     public boolean isOriginalControl;
     public boolean isDisplayTimeAxis;
-    public boolean isFastSlidingSelect;
 
     public static ImageEngine imageEngine;
     public static CompressEngine compressEngine;
@@ -124,6 +124,7 @@ public final class PictureSelectionConfig implements Parcelable {
     public static OnPermissionsInterceptListener onPermissionsEventListener;
     public static OnInjectLayoutResourceListener onLayoutResourceListener;
     public static OnPreviewInterceptListener onPreviewInterceptListener;
+    public static OnPhotoSelectListener onPhotoSelectListener;
 
 
     protected PictureSelectionConfig(Parcel in) {
@@ -155,6 +156,7 @@ public final class PictureSelectionConfig implements Parcelable {
         selectMaxFileSize = in.readLong();
         selectMinFileSize = in.readLong();
         language = in.readInt();
+        photoStartNumber = in.readInt();
         isDisplayCamera = in.readByte() != 0;
         isGif = in.readByte() != 0;
         isWebp = in.readByte() != 0;
@@ -169,7 +171,6 @@ public final class PictureSelectionConfig implements Parcelable {
         isHidePreviewDownload = in.readByte() != 0;
         isWithVideoImage = in.readByte() != 0;
         queryOnlyList = in.createStringArrayList();
-        skipCropList = in.createStringArrayList();
         isCheckOriginalImage = in.readByte() != 0;
         outPutCameraImageFileName = in.readString();
         outPutCameraVideoFileName = in.readString();
@@ -200,7 +201,6 @@ public final class PictureSelectionConfig implements Parcelable {
         isSandboxFileEngine = in.readByte() != 0;
         isOriginalControl = in.readByte() != 0;
         isDisplayTimeAxis = in.readByte() != 0;
-        isFastSlidingSelect = in.readByte() != 0;
     }
 
     @Override
@@ -233,6 +233,7 @@ public final class PictureSelectionConfig implements Parcelable {
         dest.writeLong(selectMaxFileSize);
         dest.writeLong(selectMinFileSize);
         dest.writeInt(language);
+        dest.writeInt(photoStartNumber);
         dest.writeByte((byte) (isDisplayCamera ? 1 : 0));
         dest.writeByte((byte) (isGif ? 1 : 0));
         dest.writeByte((byte) (isWebp ? 1 : 0));
@@ -247,7 +248,6 @@ public final class PictureSelectionConfig implements Parcelable {
         dest.writeByte((byte) (isHidePreviewDownload ? 1 : 0));
         dest.writeByte((byte) (isWithVideoImage ? 1 : 0));
         dest.writeStringList(queryOnlyList);
-        dest.writeStringList(skipCropList);
         dest.writeByte((byte) (isCheckOriginalImage ? 1 : 0));
         dest.writeString(outPutCameraImageFileName);
         dest.writeString(outPutCameraVideoFileName);
@@ -278,7 +278,6 @@ public final class PictureSelectionConfig implements Parcelable {
         dest.writeByte((byte) (isSandboxFileEngine ? 1 : 0));
         dest.writeByte((byte) (isOriginalControl ? 1 : 0));
         dest.writeByte((byte) (isDisplayTimeAxis ? 1 : 0));
-        dest.writeByte((byte) (isFastSlidingSelect ? 1 : 0));
     }
 
     @Override
@@ -310,6 +309,7 @@ public final class PictureSelectionConfig implements Parcelable {
         minAudioSelectNum = 0;
         videoQuality = VideoQuality.VIDEO_QUALITY_HIGH;
         language = LanguageConfig.UNKNOWN_LANGUAGE;
+        photoStartNumber=1;
         filterVideoMaxSecond = 0;
         filterVideoMinSecond = 1000;
         selectMaxDurationSecond = 0;
@@ -368,12 +368,10 @@ public final class PictureSelectionConfig implements Parcelable {
         isLoaderDataEngine = false;
         isSandboxFileEngine = false;
         isPreviewFullScreenMode = true;
-        isPreviewZoomEffect = chooseMode != SelectMimeType.ofAudio();
+        isPreviewZoomEffect = true;
         isOriginalControl = false;
         isInjectLayoutResource = false;
         isDisplayTimeAxis = true;
-        isFastSlidingSelect = false;
-        skipCropList = new ArrayList<>();
     }
 
 
@@ -418,7 +416,7 @@ public final class PictureSelectionConfig implements Parcelable {
         PictureSelectionConfig.onPreviewInterceptListener = null;
         PictureSelectionConfig.onSelectLimitTipsListener = null;
         PictureThreadUtils.cancel(PictureThreadUtils.getIoPool());
-        SelectedManager.clearSelectResult();
+        SelectedManager.clear();
         BuildRecycleItemViewParams.clear();
         SelectedManager.setCurrentLocalMediaFolder(null);
     }

@@ -19,8 +19,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/ucrop_label_edit_photo"
-            android:textSize="18sp"
-            android:textColor="@color/ucrop_color_toolbar_widget" />
+            android:textColor="@color/ucrop_color_toolbar_widget"
+            android:textSize="18sp" />
 
     </androidx.appcompat.widget.Toolbar>
 
@@ -28,12 +28,53 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/recycler_gallery"
+        android:layout_above="@+id/upAndDown_container"
         android:layout_below="@+id/toolbar" />
 
+    <LinearLayout
+        android:id="@+id/upAndDown_container"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/ucrop_color_black"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_mutiple_crop_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="87dp"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:text="上一张"
+            android:textColor="@color/ucrop_color_white" />
+
+        <TextView
+            android:id="@+id/tv_mutiple_crop_count"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="47dp"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:text="2/9"
+            android:textColor="@color/ucrop_color_white" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:visibility="gone"
+        android:id="@+id/iv_crop_loading"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+      />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_gallery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" />
+        android:layout_alignParentBottom="true"
+        android:visibility="gone" />
 </RelativeLayout>

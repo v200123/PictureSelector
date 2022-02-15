@@ -36,8 +36,9 @@ public class PictureSelectorSupporterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        immersive();
+
         setContentView(R.layout.ps_activity_container);
+        immersive();
         setupFragment();
     }
 
@@ -53,6 +54,7 @@ public class PictureSelectorSupporterActivity extends AppCompatActivity {
             navigationBarColor = ContextCompat.getColor(this, R.color.ps_color_grey);
         }
         ImmersiveManager.immersiveAboveAPI23(this, statusBarColor, navigationBarColor, isDarkStatusBarBlack);
+
     }
 
     private void setupFragment() {
