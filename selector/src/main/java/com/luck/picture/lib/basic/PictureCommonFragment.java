@@ -376,14 +376,7 @@ public abstract class PictureCommonFragment extends Fragment implements IPicture
         }
         int resultCode;
         if (isSelected) {
-            for (LocalMedia localMedia : selectedResult) {
-                if(localMedia == currentMedia)
-                {
-                    localMedia = new LocalMedia();
-                }
-            }
             currentMedia.setNeedShow(false);
-//            selectedResult.remove(currentMedia);
             resultCode = SelectedManager.REMOVE;
         } else {
             if (config.selectionMode == SelectModeConfig.SINGLE) {
@@ -393,9 +386,16 @@ public abstract class PictureCommonFragment extends Fragment implements IPicture
                     selectedResult.clear();
                 }
             }
+            for (int i = 0; i < selectedResult.size(); i++) {
+                if(selectedResult.get(i) == currentMedia)
+                {
+                    LocalMedia localMedia = new LocalMedia();
+                    selectedResult.set(i,localMedia);
+                }
+            }
             boolean needAddToList = true;
             for (int i = 0; i < selectedResult.size(); i++) {
-                if (!selectedResult.get(i).isNeedShow()) {
+                if (selectedResult.get(i)==null||!selectedResult.get(i).isNeedShow()) {
                     needAddToList = false;
                     int startIndex = config.photoStartNumber-1;
                     currentMedia.setNum(startIndex+i + 1);

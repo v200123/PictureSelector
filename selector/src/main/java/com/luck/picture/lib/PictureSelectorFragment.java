@@ -163,10 +163,10 @@ public class PictureSelectorFragment extends PictureCommonFragment
 
     @Override
     public void sendChangeSubSelectPositionEvent(boolean adapterChange) {
+        int start = config.photoStartNumber-1;
         if (PictureSelectionConfig.selectorStyle.getSelectMainStyle().isSelectNumberStyle()) {
             for (int index = 0; index < SelectedManager.getCount(); index++) {
                 LocalMedia media = SelectedManager.getSelectedResult().get(index);
-                int start = config.photoStartNumber-1;
                 media.setNum(start+index + 1);
                 if (adapterChange) {
                     mAdapter.notifyItemPositionChanged(media.position);

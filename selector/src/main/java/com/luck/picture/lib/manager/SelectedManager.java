@@ -32,7 +32,7 @@ public class SelectedManager {
     public static int getCount() {
         int size = 0;
         for (LocalMedia localMedia : selectedResult) {
-            if(localMedia.isNeedShow())
+            if(localMedia!=null&&localMedia.isNeedShow())
                 size++;
         }
         return size;

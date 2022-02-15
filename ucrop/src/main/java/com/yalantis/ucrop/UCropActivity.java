@@ -231,7 +231,7 @@ public class UCropActivity extends AppCompatActivity {
             mTvPhotoMuban.setVisibility(View.VISIBLE);
             ArrayList<String> previewPhotoList = getIntent().getExtras().getStringArrayList(EXTRA_SHOW_PREVIEW_LIST);
             Glide.with(this).asDrawable().load(previewPhotoList.get(0)).into(mIvPhotoPreview);
-            mTvPhotoMuban.setText("模板图"+(intent.getIntExtra(UCrop.EXTRA_CROP_INDEX,0)+1));
+            mTvPhotoMuban.setText("模板图"+(intent.getIntExtra(UCrop.EXTRA_CROP_INDEX,0)));
         }else{
             mIvPhotoPreview.setVisibility(View.GONE);
             mTvPhotoMuban.setVisibility(View.GONE);

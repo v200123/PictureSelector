@@ -252,14 +252,15 @@ public class BaseRecyclerMediaHolder extends RecyclerView.ViewHolder {
      */
     private void notifySelectNumberStyle(LocalMedia currentMedia) {
         tvCheck.setText("");
-        if(currentMedia.isNeedShow()) {
-            for (int i = 0; i < SelectedManager.getCount(); i++) {
+        if(currentMedia!=null&&currentMedia.isNeedShow()) {
+            for (int i = 0; i < SelectedManager.getSelectedResult().size(); i++) {
                 //修改这里的数量显示
                 LocalMedia media = SelectedManager.getSelectedResult().get(i);
                 if (TextUtils.equals(media.getPath(), currentMedia.getPath())
                         || media.getId() == currentMedia.getId()) {
                     currentMedia.setNum(media.getNum());
                     media.setPosition(currentMedia.getPosition());
+                    if(media.isNeedShow())
                     tvCheck.setText(ValueOf.toString(currentMedia.getNum()));
                 }
             }
