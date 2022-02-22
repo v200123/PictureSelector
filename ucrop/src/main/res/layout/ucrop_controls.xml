@@ -17,40 +17,39 @@
             android:id="@+id/image_view_state_close"
             android:src="@drawable/crop_photo_close"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"/>
+            android:layout_height="25dp"/>
         <ImageView
             android:layout_weight="1"
 
             android:id="@+id/image_view_state_rotate_left"
             android:src="@drawable/crop_photo_rotate"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"/>
-        <ImageView
-            android:layout_weight="1"
-            android:id="@+id/image_view_state_fuwei"
-            android:src="@drawable/crop_photo_fuwei"
-            android:layout_width="wrap_content"
-            android:layout_height="20dp"/>
+            android:layout_height="25dp"/>
         <ImageView
             android:layout_weight="1"
 
+            android:id="@+id/image_view_state_fuwei"
+            android:src="@drawable/crop_photo_fuwei"
+            android:layout_width="wrap_content"
+            android:layout_height="25dp"/>
+        <ImageView
+            android:layout_weight="1"
             android:id="@+id/image_view_state_rotate_right"
             android:src="@drawable/crop_photo_rotate_right"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"/>
+            android:layout_height="25dp"/>
         <ImageView
             android:layout_weight="1"
             android:id="@+id/image_view_state_tailor_change"
             android:src="@drawable/ucrop_photo_tailor_ic"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"/>
+            android:layout_height="25dp"/>
         <ImageView
             android:layout_weight="1"
-
             android:id="@+id/image_view_state_rotate_ensure"
             android:src="@drawable/crop_photo_ensure"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"/>
+            android:layout_height="25dp"/>
 
 
         <!--        <LinearLayout-->

@@ -1022,19 +1022,21 @@ public abstract class PictureCommonFragment extends Fragment implements IPicture
                     } else {
                         String extra = data.getStringExtra(MediaStore.EXTRA_OUTPUT);
                         JSONArray array = new JSONArray(extra);
-                        if (array.length() == selectedResult.size()) {
+                        if (array.length() == SelectedManager.getCount()) {
                             for (int i = 0; i < selectedResult.size(); i++) {
-                                LocalMedia media = selectedResult.get(i);
-                                    JSONObject item = array.optJSONObject(i);
-                                    media.setCutPath(item.optString(CustomIntentKey.EXTRA_OUT_PUT_PATH));
-                                    media.setCut(!TextUtils.isEmpty(media.getCutPath()));
-                                    media.setCropImageWidth(item.optInt(CustomIntentKey.EXTRA_IMAGE_WIDTH));
-                                    media.setCropImageHeight(item.optInt(CustomIntentKey.EXTRA_IMAGE_HEIGHT));
-                                    media.setCropOffsetX(item.optInt(CustomIntentKey.EXTRA_OFFSET_X));
-                                    media.setCropOffsetY(item.optInt(CustomIntentKey.EXTRA_OFFSET_Y));
-                                    media.setCropResultAspectRatio((float) item.optDouble(CustomIntentKey.EXTRA_ASPECT_RATIO));
-                                    media.setCustomData(item.optString(CustomIntentKey.EXTRA_CUSTOM_EXTRA_DATA));
-                                    media.setSandboxPath(media.getCutPath());
+                                    LocalMedia media = selectedResult.get(i);
+                                    if(media.isNeedShow()) {
+                                        JSONObject item = array.optJSONObject(i);
+                                        media.setCutPath(item.optString(CustomIntentKey.EXTRA_OUT_PUT_PATH));
+                                        media.setCut(!TextUtils.isEmpty(media.getCutPath()));
+                                        media.setCropImageWidth(item.optInt(CustomIntentKey.EXTRA_IMAGE_WIDTH));
+                                        media.setCropImageHeight(item.optInt(CustomIntentKey.EXTRA_IMAGE_HEIGHT));
+                                        media.setCropOffsetX(item.optInt(CustomIntentKey.EXTRA_OFFSET_X));
+                                        media.setCropOffsetY(item.optInt(CustomIntentKey.EXTRA_OFFSET_Y));
+                                        media.setCropResultAspectRatio((float) item.optDouble(CustomIntentKey.EXTRA_ASPECT_RATIO));
+                                        media.setCustomData(item.optString(CustomIntentKey.EXTRA_CUSTOM_EXTRA_DATA));
+                                        media.setSandboxPath(media.getCutPath());
+                                    }
                             }
                         }
                     }
@@ -1345,16 +1347,20 @@ public abstract class PictureCommonFragment extends Fragment implements IPicture
             if (localMedia.isNeedShow())
                 result.add(localMedia);
         }
+        SelectedManager.clear();
+        for (LocalMedia localMedia : result) {
+            SelectedManager.addResult(localMedia);
+        }
         if (checkCropValidity()) {
             LocalMedia currentLocalMedia = null;
-            for (int i = 0; i < result.size(); i++) {
-                LocalMedia item = result.get(i);
-                if (PictureMimeType.isHasImage(result.get(i).getMimeType())) {
+            for (int i = 0; i < selectedResult.size(); i++) {
+                LocalMedia item = selectedResult.get(i);
+                if (PictureMimeType.isHasImage(selectedResult.get(i).getMimeType())) {
                     currentLocalMedia = item;
                     break;
                 }
             }
-            PictureSelectionConfig.cropEngine.onStartCrop(this, currentLocalMedia, result, Crop.REQUEST_CROP);
+            PictureSelectionConfig.cropEngine.onStartCrop(this, currentLocalMedia, selectedResult, Crop.REQUEST_CROP);
         } else if (checkCompressValidity()) {
             showLoading();
             PictureSelectionConfig.compressEngine.onStartCompress(getContext(), result,

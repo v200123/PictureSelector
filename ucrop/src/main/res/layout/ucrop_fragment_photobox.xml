@@ -21,11 +21,11 @@
             android:alpha="0" />
         <ImageView
             android:layout_margin="18dp"
+            android:scaleType="fitXY"
             android:id="@+id/image_view_logo"
-            android:layout_width="99dp"
-            android:layout_height="60dp"
+            android:layout_width="140dp"
+            android:layout_height="79dp"
             android:layout_gravity="end"
-
             tools:background="@drawable/ucrop_vector_ic_crop"
             tools:ignore="ContentDescription,MissingPrefix" />
         <TextView
@@ -35,9 +35,9 @@
             android:textColor="@color/ucrop_color_white"
             android:background="#90858585"
             android:layout_gravity="end"
-            android:layout_marginTop="60dp"
+            android:layout_marginTop="79dp"
             android:layout_marginEnd="18dp"
-            android:layout_width="99dp"
+            android:layout_width="140dp"
             android:layout_height="wrap_content"/>
 
     </FrameLayout>
