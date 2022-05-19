@@ -3,6 +3,7 @@ package com.yalantis.ucrop.view;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -29,6 +30,8 @@ import com.yalantis.ucrop.task.BitmapCropTask;
 import com.yalantis.ucrop.util.CubicEasing;
 import com.yalantis.ucrop.util.RectUtils;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
@@ -58,7 +61,7 @@ public class CropImageView extends TransformImageView {
 
     private Runnable mWrapCropBoundsRunnable, mZoomImageToPositionRunnable = null;
 
-    private float mMaxScale, mMinScale,mCenterScale;
+    private float mMaxScale, mMinScale, mCenterScale;
     private int mMaxResultImageSizeX = 0, mMaxResultImageSizeY = 0;
     private long mImageToWrapCropBoundsAnimDuration = DEFAULT_IMAGE_TO_CROP_BOUNDS_ANIM_DURATION;
 
@@ -98,6 +101,8 @@ public class CropImageView extends TransformImageView {
 
         new BitmapCropTask(getContext(), getViewBitmap(), imageState, cropParameters, cropCallback)
                 .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+
     }
 
     /**
@@ -133,8 +138,8 @@ public class CropImageView extends TransformImageView {
                 cropRect.right - getPaddingRight(), cropRect.bottom - getPaddingBottom());
         calculateImageScaleBounds();
         setImageToWrapCropBounds();
-        if(mOriginBitmap == null)
-            mOriginBitmap = this.getViewBitmap().copy(this.getViewBitmap().getConfig(),false);
+        if (mOriginBitmap == null)
+            mOriginBitmap = this.getViewBitmap().copy(this.getViewBitmap().getConfig(), false);
     }
 
     /**
@@ -166,7 +171,6 @@ public class CropImageView extends TransformImageView {
     public CropBoundsChangeListener getCropBoundsChangeListener() {
         return mCropBoundsChangeListener;
     }
-
 
 
     public void setCropBoundsChangeListener(@Nullable CropBoundsChangeListener cropBoundsChangeListener) {

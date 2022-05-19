@@ -128,7 +128,7 @@ public class BitmapLoadTask extends AsyncTask<Void, Void, BitmapLoadTask.BitmapW
                 return new BitmapWorkerResult(new IllegalArgumentException("Bitmap could not be decoded from the Uri: [" + mInputUri + "]", e));
             }
         }
-
+        Log.e(TAG,"当前图片的采样率为:"+options.inSampleSize);
         if (decodeSampledBitmap == null) {
             return new BitmapWorkerResult(new IllegalArgumentException("Bitmap could not be decoded from the Uri: [" + mInputUri + "]"));
         }

@@ -127,6 +127,9 @@ public class UCropView extends FrameLayout {
     public ImageView getmCenterImageView() {
         return mCenterImageView;
     }
+    public ImageView getmVagueImageView() {
+        return mVagueImageView;
+    }
 
     public FrameLayout getmFlImageViewCrop() {
         return mFlImageViewCrop;

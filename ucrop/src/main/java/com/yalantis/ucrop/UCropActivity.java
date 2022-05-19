@@ -136,7 +136,7 @@ public class UCropActivity extends AppCompatActivity {
     private Transition mControlsTransition;
 
     private Bitmap.CompressFormat mCompressFormat = DEFAULT_COMPRESS_FORMAT;
-    private int mCompressQuality = DEFAULT_COMPRESS_QUALITY;
+    private int mCompressQuality;
     private int[] mAllowedGestures = new int[]{SCALE, ROTATE, ALL};
 
     static {
@@ -325,6 +325,7 @@ public class UCropActivity extends AppCompatActivity {
 
     private void setupViews(@NonNull Intent intent) {
         isForbidCropGifWebp = intent.getBooleanExtra(UCrop.Options.EXTRA_CROP_FORBID_GIF_WEBP, false);
+        mCompressQuality = intent.getIntExtra(UCrop.Options.EXTRA_COMPRESSION_QUALITY,DEFAULT_COMPRESS_QUALITY);
         mStatusBarColor = intent.getIntExtra(UCrop.Options.EXTRA_STATUS_BAR_COLOR, ContextCompat.getColor(this, R.color.ucrop_color_statusbar));
         mToolbarColor = intent.getIntExtra(UCrop.Options.EXTRA_TOOL_BAR_COLOR, ContextCompat.getColor(this, R.color.ucrop_color_toolbar));
         mActiveControlsWidgetColor = intent.getIntExtra(UCrop.Options.EXTRA_UCROP_COLOR_CONTROLS_WIDGET_ACTIVE, ContextCompat.getColor(this, R.color.ucrop_color_active_controls_color));
@@ -733,7 +734,7 @@ public class UCropActivity extends AppCompatActivity {
             float resizeScale = Math.min(scaleX, scaleY);
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(drawingCache,
                     Math.round(mUCropView.getmFlImageViewCrop().getWidth() * resizeScale),
-                    Math.round(mUCropView.getmFlImageViewCrop().getHeight() * resizeScale), false);
+                    Math.round(mUCropView.getmFlImageViewCrop().getHeight() * resizeScale), true);
             saveImage(scaledBitmap);
             setResultUri(cropImageView.getImageOutputUri(), 0f, 0, 0, 0, 0);
             drawingCache.recycle();

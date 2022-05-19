@@ -861,8 +861,8 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         options.setExtraShowPreviewView(true);
         options.setPreviewPhotoList(photoUrl);
         options.setCircleDimmedLayer(cb_crop_circular.isChecked());
-        options.withAspectRatio(600, 800);
-        options.withMaxResultSize(600,800);
+        options.withAspectRatio(1920, 1080);
+        options.withMaxResultSize(1920,1080);
         options.setShowSetImageType(true);
         options.setCropOutputPathDir(getSandboxPath());
         options.isCropDragSmoothToCenter(false);

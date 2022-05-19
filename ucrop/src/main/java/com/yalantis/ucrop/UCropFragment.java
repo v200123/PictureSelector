@@ -629,7 +629,7 @@ public class UCropFragment extends Fragment {
             float scaleY = Ratio_Y / layoutParams.height;
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(drawingCache,
                     (int) Ratio_X,
-                    (int) Ratio_Y, false);
+                    (int) Ratio_Y, true);
             saveImage(scaledBitmap);
             callback.onCropFinish(getResult(cropImageView.getImageOutputUri(), 0f, 0, 0, 0, 0));
             callback.loadingProgress(false);

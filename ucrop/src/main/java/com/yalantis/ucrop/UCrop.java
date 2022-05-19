@@ -41,6 +41,7 @@ public class UCrop {
     public static final String EXTRA_OUTPUT_URI = EXTRA_PREFIX + ".OutputUri";
     public static final String EXTRA_SINGLE_PHOTO_URL = EXTRA_PREFIX + ".SinglePhotoUrl";
     public static final String EXTRA_CROP_INDEX = EXTRA_PREFIX + ".UcropIndex";//设置模板图的底部index
+    public static final String EXTRA_CROP_QUALITY = EXTRA_PREFIX + ".UcropQuality";//设置模板图的底部index
 
     public static final String EXTRA_OUTPUT_CROP_ASPECT_RATIO = EXTRA_PREFIX + ".CropAspectRatio";
     public static final String EXTRA_OUTPUT_IMAGE_WIDTH = EXTRA_PREFIX + ".ImageWidth";
@@ -480,6 +481,13 @@ public class UCrop {
                                        @UCropActivity.GestureTypes int tabRotate,
                                        @UCropActivity.GestureTypes int tabAspectRatio) {
             mOptionBundle.putIntArray(EXTRA_ALLOWED_GESTURES, new int[]{tabScale, tabRotate, tabAspectRatio});
+        }
+
+        /**
+         *
+         */
+        public void setPhotoQuality(int photoQuality){
+            mOptionBundle.putInt(EXTRA_COMPRESSION_QUALITY,photoQuality);
         }
 
         /**

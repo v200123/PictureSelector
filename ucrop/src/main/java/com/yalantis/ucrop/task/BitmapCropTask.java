@@ -70,7 +70,7 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Throwable> {
         mViewBitmap = viewBitmap;
         mCropRect = imageState.getCropRect();
         mCurrentImageRect = imageState.getCurrentImageRect();
-
+        //记录当前的手指缩放比例的
         mCurrentScale = imageState.getCurrentScale();
         mCurrentAngle = imageState.getCurrentAngle();
         mMaxResultImageSizeX = cropParameters.getMaxResultImageSizeX();
@@ -130,7 +130,7 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Throwable> {
 
             Bitmap resizedBitmap = Bitmap.createScaledBitmap(mViewBitmap,
                     Math.round(mViewBitmap.getWidth() * resizeScale),
-                    Math.round(mViewBitmap.getHeight() * resizeScale), false);
+                    Math.round(mViewBitmap.getHeight() * resizeScale), true); //1920*1080
             if (mViewBitmap != resizedBitmap) {
                 mViewBitmap.recycle();
             }
@@ -154,10 +154,10 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Throwable> {
             mViewBitmap = rotatedBitmap;
         }
 
-        cropOffsetX = Math.round((mCropRect.left - mCurrentImageRect.left) / mCurrentScale);
-        cropOffsetY = Math.round((mCropRect.top - mCurrentImageRect.top) / mCurrentScale);
-        mCroppedImageWidth = Math.round(mCropRect.width() / mCurrentScale);
-        mCroppedImageHeight = Math.round(mCropRect.height() / mCurrentScale);
+        cropOffsetX = Math.round(((mCropRect.left - mCurrentImageRect.left) / mCurrentScale ));
+        cropOffsetY = Math.round((mCropRect.top - mCurrentImageRect.top) / mCurrentScale);//200
+        mCroppedImageWidth = Math.round(mCropRect.width() / mCurrentScale);//1920
+        mCroppedImageHeight = Math.round(mCropRect.height() / mCurrentScale);//1080
 
         boolean shouldCrop = shouldCrop(mCroppedImageWidth, mCroppedImageHeight);
         Log.i(TAG, "Should crop: " + shouldCrop);
@@ -169,7 +169,7 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Throwable> {
             if (cropOffsetX + mCroppedImageWidth > mViewBitmap.getWidth()) {
                 mCroppedImageWidth -= 5;
             }
-            saveImage(Bitmap.createBitmap(mViewBitmap, cropOffsetX, cropOffsetY, mCroppedImageWidth, mCroppedImageHeight));
+            saveImage(Bitmap.createBitmap(mViewBitmap, cropOffsetX, cropOffsetY, mCroppedImageWidth, mCroppedImageHeight));//后面两个是输出的大小
             if (mCompressFormat.equals(Bitmap.CompressFormat.JPEG)) {
                 copyExifForOutputFile(context);
             }
@@ -221,7 +221,6 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Throwable> {
         if (context == null) {
             return;
         }
-
         OutputStream outputStream = null;
         ByteArrayOutputStream outStream = null;
         try {
