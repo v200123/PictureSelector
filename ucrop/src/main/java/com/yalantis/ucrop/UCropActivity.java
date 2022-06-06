@@ -128,7 +128,7 @@ public class UCropActivity extends AppCompatActivity {
     private ImageView mIVClose,mIVRotateLeft,mIVRotateRight,mIVRJingxiang,mIVEnsure,mIVFuWei,mIVTailor,mIvPhotoPreview;
     private TextView mTvPhotoMuban;
 
-    private ViewGroup mLayoutAspectRatio, mLayoutRotate, mLayoutScale;
+//    private ViewGroup mLayoutAspectRatio, mLayoutRotate, mLayoutScale;
     private List<ViewGroup> mCropAspectRatioViews = new ArrayList<>();
     private TextView mTextViewRotateAngle, mTextViewScalePercent;
     private View mBlockingView;
@@ -612,35 +612,35 @@ public class UCropActivity extends AppCompatActivity {
         setAngleTextColor(mActiveControlsWidgetColor);
     }
 
-    private void setupScaleWidget() {
-        mTextViewScalePercent = findViewById(R.id.text_view_scale);
-        ((HorizontalProgressWheelView) findViewById(R.id.scale_scroll_wheel))
-                .setScrollingListener(new HorizontalProgressWheelView.ScrollingListener() {
-                    @Override
-                    public void onScroll(float delta, float totalDistance) {
-                        if (delta > 0) {
-                            mGestureCropImageView.zoomInImage(mGestureCropImageView.getCurrentScale()
-                                    + delta * ((mGestureCropImageView.getMaxScale() - mGestureCropImageView.getMinScale()) / SCALE_WIDGET_SENSITIVITY_COEFFICIENT));
-                        } else {
-                            mGestureCropImageView.zoomOutImage(mGestureCropImageView.getCurrentScale()
-                                    + delta * ((mGestureCropImageView.getMaxScale() - mGestureCropImageView.getMinScale()) / SCALE_WIDGET_SENSITIVITY_COEFFICIENT));
-                        }
-                    }
-
-                    @Override
-                    public void onScrollEnd() {
-                        mGestureCropImageView.setImageToWrapCropBounds();
-                    }
-
-                    @Override
-                    public void onScrollStart() {
-                        mGestureCropImageView.cancelAllAnimations();
-                    }
-                });
-        ((HorizontalProgressWheelView) findViewById(R.id.scale_scroll_wheel)).setMiddleLineColor(mActiveControlsWidgetColor);
-
-        setScaleTextColor(mActiveControlsWidgetColor);
-    }
+//    private void setupScaleWidget() {
+//        mTextViewScalePercent = findViewById(R.id.text_view_scale);
+//        ((HorizontalProgressWheelView) findViewById(R.id.scale_scroll_wheel))
+//                .setScrollingListener(new HorizontalProgressWheelView.ScrollingListener() {
+//                    @Override
+//                    public void onScroll(float delta, float totalDistance) {
+//                        if (delta > 0) {
+//                            mGestureCropImageView.zoomInImage(mGestureCropImageView.getCurrentScale()
+//                                    + delta * ((mGestureCropImageView.getMaxScale() - mGestureCropImageView.getMinScale()) / SCALE_WIDGET_SENSITIVITY_COEFFICIENT));
+//                        } else {
+//                            mGestureCropImageView.zoomOutImage(mGestureCropImageView.getCurrentScale()
+//                                    + delta * ((mGestureCropImageView.getMaxScale() - mGestureCropImageView.getMinScale()) / SCALE_WIDGET_SENSITIVITY_COEFFICIENT));
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onScrollEnd() {
+//                        mGestureCropImageView.setImageToWrapCropBounds();
+//                    }
+//
+//                    @Override
+//                    public void onScrollStart() {
+//                        mGestureCropImageView.cancelAllAnimations();
+//                    }
+//                });
+//        ((HorizontalProgressWheelView) findViewById(R.id.scale_scroll_wheel)).setMiddleLineColor(mActiveControlsWidgetColor);
+//
+//        setScaleTextColor(mActiveControlsWidgetColor);
+//    }
 
     private void setAngleText(float angle) {
         if (mTextViewRotateAngle != null) {
@@ -673,8 +673,13 @@ public class UCropActivity extends AppCompatActivity {
     }
 
     private void rotateByAngle(int angle) {
-        mGestureCropImageView.postRotate(angle);
-        mGestureCropImageView.setImageToWrapCropBounds();
+        GestureCropImageView cropImageView = mUCropView.getCropImageView();
+        if(cropImageView.outputImage)
+            mUCropView.rotateBlurred(angle);
+        else{
+            mGestureCropImageView.postRotate(angle);
+            mGestureCropImageView.setImageToWrapCropBounds();
+        }
     }
 
     private final View.OnClickListener mStateClickListener = new View.OnClickListener() {

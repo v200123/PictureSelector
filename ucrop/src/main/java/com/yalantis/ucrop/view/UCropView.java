@@ -2,6 +2,8 @@ package com.yalantis.ucrop.view;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -9,6 +11,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.Transformation;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.request.RequestOptions;
 import com.yalantis.ucrop.R;
 import com.yalantis.ucrop.callback.ChangeImageViewTypeListener;
@@ -18,6 +23,8 @@ import com.yalantis.ucrop.callback.OverlayViewChangeListener;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import java.security.MessageDigest;
+
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class UCropView extends FrameLayout {
@@ -26,6 +33,7 @@ public class UCropView extends FrameLayout {
     private ImageView mCenterImageView, mVagueImageView;
     private FrameLayout mFlImageViewCrop;
     private final OverlayView mViewOverlay;
+    private Float mNowRotate = 0f;
 
     public UCropView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -113,6 +121,26 @@ public class UCropView extends FrameLayout {
     }
 
     /**
+     * 用于旋转模糊图
+     */
+    public void rotateBlurred(float radio) {
+        mNowRotate += radio;
+        if (mNowRotate == 360)
+            mNowRotate = 0f;
+//        mCenterImageView.setRotation(mNowRotate);
+//        mVagueImageView.setRotation(mNowRotate);
+            Glide.with(UCropView.this).load(mGestureCropImageView.getImageInputUri()).diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .override((int) mViewOverlay.getCropViewRect().width() + 10,
+                            (int) mViewOverlay.getCropViewRect().height() + 10)
+                    .transform(new RotateTransformation(getContext(),mNowRotate))
+                            .into(mCenterImageView);
+            Glide.with(UCropView.this).load(mGestureCropImageView.getImageInputUri())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .transform(new BlurTransformation(25, 3),new RotateTransformation(getContext(),mNowRotate))
+                    .into(mVagueImageView);
+    }
+
+    /**
      * Method for reset state for UCropImageView such as rotation, scale, translation.
      * Be careful: this method recreate UCropImageView instance and reattach it to layout.
      */
@@ -127,6 +155,7 @@ public class UCropView extends FrameLayout {
     public ImageView getmCenterImageView() {
         return mCenterImageView;
     }
+
     public ImageView getmVagueImageView() {
         return mVagueImageView;
     }

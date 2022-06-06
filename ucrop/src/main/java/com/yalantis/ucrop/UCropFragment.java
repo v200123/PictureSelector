@@ -98,9 +98,9 @@ public class UCropFragment extends Fragment {
     private UCropView mUCropView;
     private GestureCropImageView mGestureCropImageView;
     private OverlayView mOverlayView;
-    private ImageView mIVClose, mIVRotateLeft, mIVRotateRight, mIVRJingxiang, mIVEnsure, mIVFuWei,mIVTailor,mIvPhotoPreview;
+    private ImageView mIVClose, mIVRotateLeft, mIVRotateRight, mIVEnsure, mIVFuWei,mIVTailor,mIvPhotoPreview;
     private TextView mTvPhotoMuban;
-    private ViewGroup mLayoutAspectRatio, mLayoutRotate, mLayoutScale;
+
     private final List<ViewGroup> mCropAspectRatioViews = new ArrayList<>();
     private TextView mTextViewRotateAngle, mTextViewScalePercent;
     private View mBlockingView;
@@ -570,8 +570,13 @@ public class UCropFragment extends Fragment {
     }
 
     private void rotateByAngle(int angle) {
-        mGestureCropImageView.postRotate(angle);
-        mGestureCropImageView.setImageToWrapCropBounds();
+        GestureCropImageView cropImageView = mUCropView.getCropImageView();
+        if(cropImageView.outputImage)
+            mUCropView.rotateBlurred(angle);
+        else{
+            mGestureCropImageView.postRotate(angle);
+            mGestureCropImageView.setImageToWrapCropBounds();
+        }
     }
 
     private final View.OnClickListener mStateClickListener = new View.OnClickListener() {

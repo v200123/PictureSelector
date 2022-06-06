@@ -223,7 +223,6 @@ public class UCropMultipleActivity extends AppCompatActivity implements UCropFra
             mTvBackToUp.setVisibility(View.INVISIBLE);
         }else{
             mTvBackToUp.setVisibility(View.VISIBLE);
-
         }
         uCropCurrentFragment = targetFragment;
         transaction.commitAllowingStateLoss();

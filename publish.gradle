@@ -135,7 +135,7 @@ publishing {
         maven {
             name = projectArtifactId
 
-            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def releasesRepoUrl = "https://packages.aliyun.com/maven/repository/2172868-release-IdpJTx"
             def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
             // You only need this if you want to publish snapshots, otherwise just set the URL
             // to the release repo directly
