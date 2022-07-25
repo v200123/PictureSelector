@@ -2,38 +2,33 @@ package com.yalantis.ucrop.view;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
+
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.request.RequestOptions;
 import com.yalantis.ucrop.R;
 import com.yalantis.ucrop.callback.ChangeImageViewTypeListener;
 import com.yalantis.ucrop.callback.CropBoundsChangeListener;
 import com.yalantis.ucrop.callback.OverlayViewChangeListener;
 
-import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
-
-import java.security.MessageDigest;
-
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class UCropView extends FrameLayout {
 
     private GestureCropImageView mGestureCropImageView;
+    private final OverlayView mViewOverlay;
+    /*自己的逻辑*/
     private ImageView mCenterImageView, mVagueImageView;
     private FrameLayout mFlImageViewCrop;
-    private final OverlayView mViewOverlay;
     private Float mNowRotate = 0f;
+    /*自己的逻辑*/
 
     public UCropView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -44,9 +39,9 @@ public class UCropView extends FrameLayout {
 
         LayoutInflater.from(context).inflate(R.layout.ucrop_view, this, true);
         mGestureCropImageView = findViewById(R.id.image_view_crop);
-        mVagueImageView = findViewById(R.id.iv_vague_image);
         mViewOverlay = findViewById(R.id.view_overlay);
         mFlImageViewCrop = findViewById(R.id.fl_image_view_crop);
+        mVagueImageView = findViewById(R.id.iv_vague_image);
         mCenterImageView = findViewById(R.id.top_image);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ucrop_UCropView);
         mViewOverlay.processStyledAttributes(a);
@@ -58,6 +53,8 @@ public class UCropView extends FrameLayout {
     }
 
     private void setListenersToViews() {
+        /*自己的逻辑*/
+
         mGestureCropImageView.setChangeImageViewTypeListener(new ChangeImageViewTypeListener() {
             @Override
             public void onChangeImageViewType(boolean changed) {
@@ -83,6 +80,8 @@ public class UCropView extends FrameLayout {
                 }
             }
         });
+        /*自己的逻辑*/
+
         mGestureCropImageView.setCropBoundsChangeListener(new CropBoundsChangeListener() {
             @Override
             public void onCropAspectRatioChanged(float cropRatio) {
@@ -92,9 +91,10 @@ public class UCropView extends FrameLayout {
         mViewOverlay.setOverlayViewChangeListener(new OverlayViewChangeListener() {
             @Override
             public void onCropRectUpdated(RectF cropRect) {
-
+                /*自己的逻辑*/
                 mCenterImageView.getLayoutParams().width = (int) cropRect.width();
                 mCenterImageView.getLayoutParams().height = (int) cropRect.height();
+                /*自己的逻辑*/
                 mGestureCropImageView.setCropRect(cropRect);
             }
 
@@ -121,26 +121,6 @@ public class UCropView extends FrameLayout {
     }
 
     /**
-     * 用于旋转模糊图
-     */
-    public void rotateBlurred(float radio) {
-        mNowRotate += radio;
-        if (mNowRotate == 360)
-            mNowRotate = 0f;
-//        mCenterImageView.setRotation(mNowRotate);
-//        mVagueImageView.setRotation(mNowRotate);
-            Glide.with(UCropView.this).load(mGestureCropImageView.getImageInputUri()).diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .override((int) mViewOverlay.getCropViewRect().width() + 10,
-                            (int) mViewOverlay.getCropViewRect().height() + 10)
-                    .transform(new RotateTransformation(getContext(),mNowRotate))
-                            .into(mCenterImageView);
-            Glide.with(UCropView.this).load(mGestureCropImageView.getImageInputUri())
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .transform(new BlurTransformation(25, 3),new RotateTransformation(getContext(),mNowRotate))
-                    .into(mVagueImageView);
-    }
-
-    /**
      * Method for reset state for UCropImageView such as rotation, scale, translation.
      * Be careful: this method recreate UCropImageView instance and reattach it to layout.
      */
@@ -150,6 +130,27 @@ public class UCropView extends FrameLayout {
         setListenersToViews();
         mGestureCropImageView.setCropRect(getOverlayView().getCropViewRect());
         addView(mGestureCropImageView, 0);
+    }
+    /*********************自己的逻辑****************************/
+
+    /**
+     * 用于旋转模糊图
+     */
+    public void rotateBlurred(float radio) {
+        mNowRotate += radio;
+        if (mNowRotate == 360)
+            mNowRotate = 0f;
+//        mCenterImageView.setRotation(mNowRotate);
+//        mVagueImageView.setRotation(mNowRotate);
+        Glide.with(UCropView.this).load(mGestureCropImageView.getImageInputUri()).diskCacheStrategy(DiskCacheStrategy.NONE)
+                .override((int) mViewOverlay.getCropViewRect().width() + 10,
+                        (int) mViewOverlay.getCropViewRect().height() + 10)
+                .transform(new RotateTransformation(getContext(),mNowRotate))
+                .into(mCenterImageView);
+        Glide.with(UCropView.this).load(mGestureCropImageView.getImageInputUri())
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .transform(new BlurTransformation(25, 3),new RotateTransformation(getContext(),mNowRotate))
+                .into(mVagueImageView);
     }
 
     public ImageView getmCenterImageView() {
@@ -163,4 +164,7 @@ public class UCropView extends FrameLayout {
     public FrameLayout getmFlImageViewCrop() {
         return mFlImageViewCrop;
     }
+
+    /*********************自己的逻辑****************************/
+
 }

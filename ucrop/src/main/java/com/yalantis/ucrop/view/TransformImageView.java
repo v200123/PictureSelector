@@ -96,7 +96,6 @@ public class TransformImageView extends AppCompatImageView {
         if (scaleType == ScaleType.MATRIX) {
             super.setScaleType(scaleType);
         } else {
-            super.setScaleType(scaleType);
             Log.w(TAG, "Invalid ScaleType. Only ScaleType.MATRIX can be used");
         }
     }
@@ -148,12 +147,8 @@ public class TransformImageView extends AppCompatImageView {
      *
      * @param imageUri - image Uri
      */
-    public void setImageUri(@NonNull Uri imageUri, @Nullable Uri outputUri, boolean isUseCustomBitmap) {
-        if (isUseCustomBitmap && UCropDevelopConfig.imageEngine != null && !FileUtils.isHasHttp(imageUri.toString())) {
-            useCustomLoaderCrop(imageUri, outputUri);
-        } else {
-            useDefaultLoaderCrop(imageUri, outputUri);
-        }
+    public void setImageUri(@NonNull Uri imageUri, @Nullable Uri outputUri) {
+        useDefaultLoaderCrop(imageUri, outputUri);
     }
 
     /**
@@ -162,6 +157,7 @@ public class TransformImageView extends AppCompatImageView {
      * @param imageUri
      * @param outputUri
      */
+    @Deprecated
     private void useCustomLoaderCrop(@NonNull final Uri imageUri, @Nullable final Uri outputUri) {
         int[] maxImageSize = BitmapLoadUtils.getMaxImageSize(getContext(), imageUri);
         UCropDevelopConfig.imageEngine.loadImage(getContext(), imageUri, maxImageSize[0], maxImageSize[1], new UCropImageEngine.OnCallbackListener<Bitmap>() {
@@ -170,6 +166,7 @@ public class TransformImageView extends AppCompatImageView {
                 if (bitmap == null) {
                     useDefaultLoaderCrop(imageUri, outputUri);
                 } else {
+                    Bitmap copyBitmap = bitmap.copy(bitmap.getConfig(), true);
                     int exifOrientation = BitmapLoadUtils.getExifOrientation(getContext(), imageUri);
                     int exifDegrees = BitmapLoadUtils.exifToDegrees(exifOrientation);
                     int exifTranslation = BitmapLoadUtils.exifToTranslation(exifOrientation);
@@ -182,9 +179,9 @@ public class TransformImageView extends AppCompatImageView {
                         matrix.postScale(exifTranslation, 1);
                     }
                     if (!matrix.isIdentity()) {
-                        bitmap = BitmapLoadUtils.transformBitmap(bitmap, matrix);
+                        copyBitmap = BitmapLoadUtils.transformBitmap(copyBitmap, matrix);
                     }
-                    setBitmapLoadedResult(bitmap, exifInfo, imageUri, outputUri);
+                    setBitmapLoadedResult(copyBitmap, exifInfo, imageUri, outputUri);
                 }
             }
         });

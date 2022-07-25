@@ -2,10 +2,13 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 29
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 29
+        versionCode cfgs.versionCode
+        versionName cfgs.versionName
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -39,6 +42,8 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:3.12.13"
     implementation "androidx.recyclerview:recyclerview:1.2.1"
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation "com.github.bumptech.glide:glide:${cfgs.glide_version}"
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
+
+
 }

@@ -70,7 +70,7 @@
         android:layout_height="30dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-      />
+        />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_gallery"
         android:layout_width="match_parent"

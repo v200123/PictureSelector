@@ -3,15 +3,10 @@ package com.yalantis.ucrop.view;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,8 +25,6 @@ import com.yalantis.ucrop.task.BitmapCropTask;
 import com.yalantis.ucrop.util.CubicEasing;
 import com.yalantis.ucrop.util.RectUtils;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
@@ -49,8 +42,10 @@ public class CropImageView extends TransformImageView {
     public static final float SOURCE_IMAGE_ASPECT_RATIO = 0f;
     public static final float DEFAULT_ASPECT_RATIO = SOURCE_IMAGE_ASPECT_RATIO;
     public Boolean outputImage = false;//是不是直接从图片容器中读取文件
-    private final RectF mCropRect = new RectF();
     private Bitmap mOriginBitmap = null;
+
+    private final RectF mCropRect = new RectF();
+
     private final Matrix mTempMatrix = new Matrix();
 
     private float mTargetAspectRatio;
@@ -61,7 +56,7 @@ public class CropImageView extends TransformImageView {
 
     private Runnable mWrapCropBoundsRunnable, mZoomImageToPositionRunnable = null;
 
-    private float mMaxScale, mMinScale, mCenterScale;
+    private float mMaxScale, mMinScale;
     private int mMaxResultImageSizeX = 0, mMaxResultImageSizeY = 0;
     private long mImageToWrapCropBoundsAnimDuration = DEFAULT_IMAGE_TO_CROP_BOUNDS_ANIM_DURATION;
 
@@ -75,7 +70,6 @@ public class CropImageView extends TransformImageView {
 
     public CropImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
     }
 
     /**
@@ -101,8 +95,6 @@ public class CropImageView extends TransformImageView {
 
         new BitmapCropTask(getContext(), getViewBitmap(), imageState, cropParameters, cropCallback)
                 .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
-
     }
 
     /**
@@ -171,7 +163,6 @@ public class CropImageView extends TransformImageView {
     public CropBoundsChangeListener getCropBoundsChangeListener() {
         return mCropBoundsChangeListener;
     }
-
 
     public void setCropBoundsChangeListener(@Nullable CropBoundsChangeListener cropBoundsChangeListener) {
         mCropBoundsChangeListener = cropBoundsChangeListener;
@@ -278,6 +269,18 @@ public class CropImageView extends TransformImageView {
         postRotate(deltaAngle, mCropRect.centerX(), mCropRect.centerY());
     }
 
+    /**
+     * This method cancels all current Runnable objects that represent animations.
+     */
+    public void cancelAllAnimations() {
+        removeCallbacks(mWrapCropBoundsRunnable);
+        removeCallbacks(mZoomImageToPositionRunnable);
+    }
+
+    public void setImageToWrapCropBounds() {
+        setImageToWrapCropBounds(true);
+    }
+
     public Boolean postImageType() {
         if (outputImage) {
             this.setVisibility(View.VISIBLE);
@@ -295,17 +298,6 @@ public class CropImageView extends TransformImageView {
         return outputImage;
     }
 
-    /**
-     * This method cancels all current Runnable objects that represent animations.
-     */
-    public void cancelAllAnimations() {
-        removeCallbacks(mWrapCropBoundsRunnable);
-        removeCallbacks(mZoomImageToPositionRunnable);
-    }
-
-    public void setImageToWrapCropBounds() {
-        setImageToWrapCropBounds(true);
-    }
 
     /**
      * If image doesn't fill the crop bounds it must be translated and scaled properly to fill those.
@@ -507,6 +499,7 @@ public class CropImageView extends TransformImageView {
     private void calculateImageScaleBounds(float drawableWidth, float drawableHeight) {
         float widthScale = Math.min(mCropRect.width() / drawableWidth, mCropRect.width() / drawableHeight);
         float heightScale = Math.min(mCropRect.height() / drawableHeight, mCropRect.height() / drawableWidth);
+
         mMinScale = Math.min(widthScale, heightScale);
         mMaxScale = mMinScale * mMaxScaleMultiplier;
     }

@@ -838,12 +838,8 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
      * @return
      */
     private UCrop.Options buildOptions() {
-        ArrayList<String> strings = new ArrayList<>();
-        strings.add("1920-1080");
-        strings.add("120-1080");
-        strings.add("190-1080");
-        strings.add("920-1080");
-        strings.add("300-300");
+
+
         ArrayList<String> photoUrl = new ArrayList<>();
         photoUrl.add("https://s.hunlihu.com/share/78085545a8654e74b7d7714f24f723bf.jpg");
         photoUrl.add("https://s.hunlihu.com/share/34ab8f922157415f9bdfa6b2e1dfc413.jpg");
@@ -857,7 +853,7 @@ public class MainActivity extends AppCompatActivity implements IBridgePictureBeh
         options.setFreeStyleCropEnabled(cb_styleCrop.isChecked());
         options.setShowCropFrame(cb_showCropFrame.isChecked());
         options.setShowCropGrid(cb_showCropGrid.isChecked());
-        options.setSizeArrays(strings);
+//        options.setMultipleCropAspectRatio(strings);
         options.setExtraShowPreviewView(true);
         options.setPreviewPhotoList(photoUrl);
         options.setCircleDimmedLayer(cb_crop_circular.isChecked());

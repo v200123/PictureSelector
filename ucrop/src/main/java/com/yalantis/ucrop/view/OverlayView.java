@@ -13,7 +13,6 @@ import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
@@ -312,7 +311,7 @@ public class OverlayView extends View {
             bottom = getHeight() - getPaddingBottom();
             mThisWidth = right - left;
             mThisHeight = bottom - top;
-            Log.e("liuchang", "当前的OverlayView的宽是:"+mThisWidth+"高为："+mThisHeight);
+
             if (mShouldSetupCropBounds) {
                 mShouldSetupCropBounds = false;
                 setTargetAspectRatio(mTargetAspectRatio);
